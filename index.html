@@ -411,6 +411,133 @@
       font-weight:900;
       cursor:pointer;
     }
+
+
+    .brand-wrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .brand-logo{
+      width:42px;
+      height:42px;
+      flex:0 0 42px;
+      object-fit:contain;
+      border-radius:50%;
+      background:#fff;
+      padding:3px;
+    }
+
+    .brand-copy{min-width:0}
+
+    .product{
+      grid-template-columns:82px 1fr auto;
+    }
+
+    .product-image{
+      width:82px;
+      height:82px;
+      border-radius:12px;
+      object-fit:cover;
+      background:#f0f0f0;
+    }
+
+    .product-image-fallback{
+      width:82px;
+      height:82px;
+      border-radius:12px;
+      background:linear-gradient(135deg,#fff0f7,#f2f2f2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+      font-weight:900;
+      color:var(--pink);
+    }
+
+    .loading-overlay{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      background:rgba(0,0,0,.36);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    .loading-overlay.hidden{display:none}
+
+    .loading-box{
+      min-width:190px;
+      background:#fff;
+      border-radius:16px;
+      padding:22px;
+      text-align:center;
+      box-shadow:0 14px 42px rgba(0,0,0,.18);
+    }
+
+    .spinner{
+      width:42px;
+      height:42px;
+      border:4px solid #eee;
+      border-top-color:var(--pink);
+      border-radius:50%;
+      margin:0 auto 12px;
+      animation:spin .85s linear infinite;
+    }
+
+    .mini-spinner{
+      width:17px;
+      height:17px;
+      border:2px solid rgba(255,255,255,.45);
+      border-top-color:#fff;
+      border-radius:50%;
+      display:inline-block;
+      vertical-align:-3px;
+      margin-right:6px;
+      animation:spin .75s linear infinite;
+    }
+
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+
+    .status-message{
+      margin:10px 0 5px;
+      padding:11px 12px;
+      border-radius:11px;
+      background:var(--pink-soft);
+      font-size:12px;
+      font-weight:800;
+      line-height:1.45;
+    }
+
+    .step.active{
+      border-left-color:var(--pink);
+      background:var(--pink-soft);
+      color:#a80058;
+    }
+
+    @media(max-width:390px){
+      .product{
+        grid-template-columns:70px 1fr auto;
+        padding:10px;
+      }
+
+      .product-image,
+      .product-image-fallback{
+        width:70px;
+        height:70px;
+      }
+
+      .add-btn{
+        min-width:58px;
+        padding:9px 10px;
+        font-size:11px;
+      }
+    }
   </style>
 </head>
 
@@ -419,8 +546,18 @@
 <div class="app">
 
   <header class="topbar">
-    <div class="brand">2K TAMBAYAN RESTO BAR</div>
-    <div id="branchLabel" class="branch">CAMAMBUGAN BRANCH • SELF ORDER</div>
+    <div class="brand-wrap">
+      <img
+        src="logo.png"
+        alt="2K Tambayan Logo"
+        class="brand-logo"
+        onerror="this.style.display='none'"
+      >
+      <div class="brand-copy">
+        <div class="brand">2K TAMBAYAN RESTO BAR</div>
+        <div id="branchLabel" class="branch">CAMAMBUGAN BRANCH • SELF ORDER</div>
+      </div>
+    </div>
   </header>
 
   <main>
@@ -550,11 +687,16 @@
 
           <div id="statusPayment" class="small"></div>
 
+          <div id="statusMessage" class="status-message">
+            We received your order.
+          </div>
+
           <div class="steps">
-            <div id="stepPending" class="step">✓ Order Received</div>
+            <div id="stepPending" class="step">Order Received</div>
             <div id="stepPaid" class="step">Payment Confirmed</div>
             <div id="stepPreparing" class="step">Preparing</div>
-            <div id="stepReady" class="step">Ready for Pickup</div>
+            <div id="stepReady" class="step">Ready for Serving</div>
+            <div id="stepServed" class="step">Served</div>
             <div id="stepCompleted" class="step">Completed</div>
           </div>
 
@@ -579,6 +721,13 @@
     </button>
   </div>
 
+</div>
+
+<div id="loadingOverlay" class="loading-overlay hidden">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div id="loadingText" style="font-weight:900">Loading...</div>
+  </div>
 </div>
 
 <script>
@@ -689,6 +838,34 @@
   }
 
 
+  function showLoading(
+    message
+  ) {
+
+    document.getElementById(
+      'loadingText'
+    ).textContent =
+      message ||
+      'Loading...';
+
+    document.getElementById(
+      'loadingOverlay'
+    ).classList.remove(
+      'hidden'
+    );
+  }
+
+
+  function hideLoading() {
+
+    document.getElementById(
+      'loadingOverlay'
+    ).classList.add(
+      'hidden'
+    );
+  }
+
+
   async function apiPost(
     payload
   ) {
@@ -782,6 +959,10 @@
 
     try {
 
+      showLoading(
+        'Loading menu...'
+      );
+
       const data =
         await apiPost({
           action:
@@ -829,6 +1010,10 @@
           error.message
         ) +
         '</div>';
+
+    } finally {
+
+      hideLoading();
     }
   }
 
@@ -961,6 +1146,7 @@
 
             return (
               '<div class="product">' +
+                productImageHtml(product) +
                 '<div>' +
                   '<div class="product-name">' +
                     escapeHtml(
@@ -998,6 +1184,40 @@
         .join(
           ''
         );
+  }
+
+
+  function productImageHtml(
+    product
+  ) {
+
+    const imageUrl =
+      String(
+        product.imageUrl ||
+        ''
+      )
+        .trim();
+
+    if (
+      imageUrl
+    ) {
+
+      return (
+        '<img class="product-image" src="' +
+        escapeAttr(
+          imageUrl
+        ) +
+        '" alt="' +
+        escapeAttr(
+          product.name
+        ) +
+        '" onerror="this.outerHTML=\\'<div class=&quot;product-image-fallback&quot;>2K</div>\\'">'
+      );
+    }
+
+    return (
+      '<div class="product-image-fallback">2K</div>'
+    );
   }
 
 
@@ -1546,6 +1766,10 @@
 
     try {
 
+      showLoading(
+        'Submitting your order...'
+      );
+
       const data =
         await apiPost({
           action:
@@ -1621,6 +1845,8 @@
         '</div>';
 
     } finally {
+
+      hideLoading();
 
       submitButton.disabled =
         false;
@@ -1740,66 +1966,6 @@
       )
         .toUpperCase();
 
-    document.getElementById(
-      'statusMain'
-    ).textContent =
-      orderStatus;
-
-    document.getElementById(
-      'statusPayment'
-    ).textContent =
-      'Payment: ' +
-      (
-        order.paymentMethod ||
-        paymentMethod
-      ) +
-      (
-        paymentStatus
-          ? ' • ' +
-            paymentStatus
-          : ''
-      );
-
-    setStep(
-      'stepPending',
-      true
-    );
-
-    setStep(
-      'stepPaid',
-      paymentStatus ===
-        'PAID'
-    );
-
-    setStep(
-      'stepPreparing',
-      [
-        'PREPARING',
-        'READY',
-        'COMPLETED'
-      ]
-        .includes(
-          orderStatus
-        )
-    );
-
-    setStep(
-      'stepReady',
-      [
-        'READY',
-        'COMPLETED'
-      ]
-        .includes(
-          orderStatus
-        )
-    );
-
-    setStep(
-      'stepCompleted',
-      orderStatus ===
-        'COMPLETED'
-    );
-
     const mainStatus =
       document.getElementById(
         'statusMain'
@@ -1816,6 +1982,154 @@
     newOrderButton.style.display =
       'none';
 
+    const displayStatus =
+      orderStatus ===
+        'READY'
+        ? 'READY FOR SERVING'
+        : orderStatus;
+
+    const waitingStatuses =
+      [
+        'PENDING',
+        'PREPARING',
+        'READY'
+      ];
+
+    mainStatus.innerHTML =
+      (
+        waitingStatuses.includes(
+          orderStatus
+        )
+          ? '<span class="mini-spinner"></span>'
+          : ''
+      ) +
+      escapeHtml(
+        displayStatus
+      );
+
+    document.getElementById(
+      'statusPayment'
+    ).textContent =
+      'Payment: ' +
+      (
+        order.paymentMethod ||
+        paymentMethod
+      ) +
+      (
+        paymentStatus
+          ? ' • ' +
+            paymentStatus
+          : ''
+      );
+
+    const sequence =
+      [
+        'PENDING',
+        'PAID',
+        'PREPARING',
+        'READY',
+        'SERVED',
+        'COMPLETED'
+      ];
+
+    let currentIndex =
+      0;
+
+    if (
+      orderStatus ===
+        'COMPLETED'
+    ) {
+      currentIndex = 5;
+    } else if (
+      orderStatus ===
+        'SERVED'
+    ) {
+      currentIndex = 4;
+    } else if (
+      orderStatus ===
+        'READY'
+    ) {
+      currentIndex = 3;
+    } else if (
+      orderStatus ===
+        'PREPARING'
+    ) {
+      currentIndex = 2;
+    } else if (
+      paymentStatus ===
+        'PAID'
+    ) {
+      currentIndex = 1;
+    }
+
+    setProgressStep(
+      'stepPending',
+      0,
+      currentIndex,
+      'Order Received'
+    );
+
+    setProgressStep(
+      'stepPaid',
+      1,
+      currentIndex,
+      'Payment Confirmed'
+    );
+
+    setProgressStep(
+      'stepPreparing',
+      2,
+      currentIndex,
+      'Preparing'
+    );
+
+    setProgressStep(
+      'stepReady',
+      3,
+      currentIndex,
+      'Ready for Serving'
+    );
+
+    setProgressStep(
+      'stepServed',
+      4,
+      currentIndex,
+      'Served'
+    );
+
+    setProgressStep(
+      'stepCompleted',
+      5,
+      currentIndex,
+      'Completed'
+    );
+
+    const message =
+      orderStatus ===
+        'PREPARING'
+        ? 'Your order is being prepared. Please remain at your table.'
+        : orderStatus ===
+            'READY'
+          ? 'Your order is ready for serving. Our staff will bring it to your table.'
+          : orderStatus ===
+              'SERVED'
+            ? 'Your order has been served. Enjoy your meal!'
+            : orderStatus ===
+                'COMPLETED'
+              ? 'Order completed. Thank you for ordering!'
+              : paymentStatus ===
+                  'PAID'
+                ? 'Payment confirmed. Your order will be prepared shortly.'
+                : order.paymentMethod ===
+                    'PAY AT CASHIER'
+                  ? 'Please pay at the cashier so the kitchen can start preparing your order.'
+                  : 'Your payment is waiting for staff verification.';
+
+    document.getElementById(
+      'statusMessage'
+    ).textContent =
+      message;
+
     if (
       orderStatus ===
         'REJECTED'
@@ -1827,6 +2141,11 @@
       mainStatus.style.background =
         '#c62828';
 
+      document.getElementById(
+        'statusMessage'
+      ).textContent =
+        'This order was rejected. Please ask our staff for assistance.';
+
       newOrderButton.style.display =
         'block';
     }
@@ -1836,9 +2155,64 @@
         'COMPLETED'
     ) {
 
+      mainStatus.style.background =
+        '#16823b';
+
       newOrderButton.style.display =
         'block';
     }
+  }
+
+
+  function setProgressStep(
+    id,
+    index,
+    currentIndex,
+    label
+  ) {
+
+    const element =
+      document.getElementById(
+        id
+      );
+
+    const done =
+      index <
+      currentIndex ||
+      (
+        index ===
+          currentIndex &&
+        currentIndex ===
+          5
+      );
+
+    const active =
+      index ===
+        currentIndex &&
+      currentIndex <
+        5;
+
+    element.classList.toggle(
+      'done',
+      done
+    );
+
+    element.classList.toggle(
+      'active',
+      active
+    );
+
+    element.innerHTML =
+      (
+        done
+          ? '✓ '
+          : active
+            ? '<span style="display:inline-block;width:10px;height:10px;border:2px solid #ff0a8a;border-top-color:transparent;border-radius:50%;animation:spin .75s linear infinite;margin-right:7px"></span>'
+            : '○ '
+      ) +
+      escapeHtml(
+        label
+      );
   }
 
 
