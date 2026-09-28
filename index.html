@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>2K Tambayan Online Order</title>
+
+  <style>
+    :root{
+      --pink:#ff0a8a;
+      --pink-soft:#fff0f7;
+      --dark:#151515;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --bg:#f5f6f8;
+      --ok:#16823b;
+      --warn:#b45309;
+      --danger:#c62828;
+      --card:#ffffff;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--dark);font-family:Arial,sans-serif}
+    body{min-height:100vh}
+
+    .app{
+      max-width:620px;
+      margin:0 auto;
+      min-height:100vh;
+      background:var(--bg);
+      padding-bottom:94px;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:#111;
+      color:#fff;
+      padding:14px 14px 12px;
+      box-shadow:0 2px 10px rgba(0,0,0,.12);
+    }
+
+    .brand{
+      font-size:20px;
+      font-weight:900;
+      letter-spacing:.4px;
+    }
+
+    .branch{
+      margin-top:3px;
+      color:#ffd4e9;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .section{
+      padding:14px;
+    }
+
+    .notice{
+      background:var(--pink-soft);
+      border:1px solid #ffc1df;
+      border-radius:12px;
+      padding:11px;
+      font-size:12px;
+      line-height:1.45;
+      margin-bottom:12px;
+    }
+
+    .search{
+      width:100%;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:12px 13px;
+      font-size:15px;
+      outline:none;
+    }
+
+    .categories{
+      display:flex;
+      gap:8px;
+      overflow:auto;
+      padding:10px 0 2px;
+      scrollbar-width:none;
+    }
+
+    .categories::-webkit-scrollbar{display:none}
+
+    .chip{
+      white-space:nowrap;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .chip.active{
+      background:var(--pink);
+      color:#fff;
+      border-color:var(--pink);
+    }
+
+    .product-list{
+      display:grid;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .product{
+      background:#fff;
+      border-radius:14px;
+      padding:13px;
+      box-shadow:0 1px 6px rgba(0,0,0,.05);
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:center;
+    }
+
+    .product-name{
+      font-size:15px;
+      font-weight:900;
+      line-height:1.3;
+    }
+
+    .product-cat{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:3px;
+    }
+
+    .product-price{
+      color:var(--pink);
+      font-size:15px;
+      font-weight:900;
+      margin-top:6px;
+    }
+
+    .stock{
+      font-size:10px;
+      color:var(--muted);
+      margin-top:3px;
+    }
+
+    .add-btn{
+      border:0;
+      background:var(--pink);
+      color:#fff;
+      border-radius:10px;
+      min-width:72px;
+      padding:10px 12px;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .bottom{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:0;
+      z-index:30;
+      width:min(620px,100%);
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:rgba(255,255,255,.98);
+      border-top:1px solid var(--line);
+    }
+
+    .cart-btn{
+      width:100%;
+      border:0;
+      background:var(--pink);
+      color:#fff;
+      border-radius:12px;
+      padding:14px;
+      font-size:15px;
+      font-weight:900;
+      display:flex;
+      justify-content:space-between;
+      cursor:pointer;
+    }
+
+    .screen{display:none}
+    .screen.active{display:block}
+
+    .panel{
+      background:#fff;
+      border-radius:14px;
+      padding:14px;
+      margin-bottom:10px;
+      box-shadow:0 1px 6px rgba(0,0,0,.05);
+    }
+
+    .title{
+      font-size:20px;
+      font-weight:900;
+      margin:0 0 12px;
+    }
+
+    .cart-line{
+      padding:11px 0;
+      border-bottom:1px solid var(--line);
+    }
+
+    .cart-line:last-child{border-bottom:0}
+
+    .cart-top{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-weight:800;
+    }
+
+    .qty-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:9px;
+    }
+
+    .qty-controls{
+      display:flex;
+      align-items:center;
+      gap:9px;
+    }
+
+    .qty-btn{
+      width:34px;
+      height:34px;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:9px;
+      font-size:19px;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .item-note{
+      width:100%;
+      margin-top:8px;
+      border:1px solid var(--line);
+      border-radius:9px;
+      padding:9px;
+      font-size:12px;
+    }
+
+    .summary-row{
+      display:flex;
+      justify-content:space-between;
+      padding:5px 0;
+      gap:10px;
+    }
+
+    .summary-row.total{
+      margin-top:7px;
+      padding-top:11px;
+      border-top:2px solid var(--dark);
+      font-size:18px;
+      font-weight:900;
+    }
+
+    label{
+      display:block;
+      font-size:11px;
+      font-weight:900;
+      margin:10px 0 5px;
+      color:#454545;
+    }
+
+    input,textarea,select{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:11px;
+      background:#fff;
+      font-size:14px;
+      outline:none;
+    }
+
+    textarea{resize:vertical;min-height:76px}
+
+    .payment-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:7px;
+      margin-top:7px;
+    }
+
+    .payment-option{
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:11px;
+      background:#fff;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .payment-option.selected{
+      border:2px solid var(--pink);
+      background:var(--pink-soft);
+      color:#a80058;
+    }
+
+    .btn{
+      width:100%;
+      border:0;
+      border-radius:11px;
+      padding:13px;
+      font-weight:900;
+      font-size:14px;
+      cursor:pointer;
+    }
+
+    .btn.primary{background:var(--pink);color:#fff}
+    .btn.dark{background:#111;color:#fff}
+    .btn.light{background:#fff;border:1px solid var(--line);color:#222}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .stack{display:grid;gap:8px}
+
+    .status-card{
+      background:#fff;
+      border-radius:16px;
+      padding:18px;
+      text-align:center;
+      box-shadow:0 1px 8px rgba(0,0,0,.06);
+    }
+
+    .order-no{
+      font-size:24px;
+      font-weight:900;
+      color:var(--pink);
+      margin:8px 0;
+    }
+
+    .status-pill{
+      display:inline-block;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#111;
+      color:#fff;
+      font-weight:900;
+      font-size:12px;
+      margin:7px 0;
+    }
+
+    .steps{
+      text-align:left;
+      margin:16px 0 0;
+    }
+
+    .step{
+      padding:10px 12px;
+      border-left:4px solid #d1d5db;
+      margin:3px 0;
+      background:#fafafa;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .step.done{
+      border-left-color:var(--ok);
+      background:#eefaf2;
+    }
+
+    .error{
+      background:#fff1f1;
+      border:1px solid #ffc5c5;
+      color:#a71919;
+      padding:10px;
+      border-radius:10px;
+      font-size:12px;
+      margin-bottom:10px;
+    }
+
+    .loading{
+      text-align:center;
+      padding:35px 12px;
+      color:var(--muted);
+      font-weight:800;
+    }
+
+    .empty{
+      text-align:center;
+      padding:28px 12px;
+      color:var(--muted);
+      background:#fff;
+      border-radius:13px;
+    }
+
+    .small{font-size:11px;color:var(--muted);line-height:1.45}
+
+    .branch-picker{
+      display:grid;
+      gap:10px;
+      padding:20px 14px;
+    }
+
+    .branch-choice{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:16px;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">2K TAMBAYAN RESTO BAR</div>
+    <div id="branchLabel" class="branch">CAMAMBUGAN BRANCH • SELF ORDER</div>
+  </header>
+
+  <main>
+
+    
+
+    <section id="menuScreen" class="screen">
+      <div class="section">
+
+        <div class="notice">
+          Scan • Select • Submit. Please stay inside the store while your order is being prepared.
+        </div>
+
+        <input
+          id="searchInput"
+          class="search"
+          placeholder="Search menu..."
+          oninput="renderProducts()"
+        >
+
+        <div id="categoryBar" class="categories"></div>
+
+        <div id="menuMessage"></div>
+        <div id="productList" class="product-list"></div>
+
+      </div>
+    </section>
+
+    <section id="cartScreen" class="screen">
+      <div class="section">
+
+        <h2 class="title">Your Order</h2>
+
+        <div id="cartLines" class="panel"></div>
+
+        <div class="panel">
+          <div class="summary-row">
+            <span>Total Items</span>
+            <strong id="cartQty">0</strong>
+          </div>
+          <div class="summary-row total">
+            <span>TOTAL</span>
+            <span id="cartTotal">₱0.00</span>
+          </div>
+        </div>
+
+        <div class="stack">
+          <button class="btn primary" onclick="openCheckout()">CHECKOUT</button>
+          <button class="btn light" onclick="showScreen('menuScreen')">ADD MORE ITEMS</button>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="checkoutScreen" class="screen">
+      <div class="section">
+
+        <h2 class="title">Checkout</h2>
+
+        <div id="checkoutError"></div>
+
+        <div class="panel">
+
+          <label>Customer Name / Nickname *</label>
+          <input id="customerName" maxlength="60" placeholder="Example: Juan">
+
+          <label>Table Number *</label>
+          <input id="tableNo" maxlength="20" placeholder="Example: 05">
+
+          <label>Contact Number</label>
+          <input id="contactNumber" maxlength="30" inputmode="tel" placeholder="Optional">
+
+          <label>Order Notes</label>
+          <textarea id="orderNotes" maxlength="250" placeholder="Example: Less ice / no onions / separate sauce"></textarea>
+
+        </div>
+
+        <div class="panel">
+          <label>Payment Method *</label>
+
+          <div class="payment-grid">
+            <button class="payment-option selected" data-payment="PAY AT CASHIER" onclick="selectPayment('PAY AT CASHIER')">
+              PAY AT CASHIER
+            </button>
+            <button class="payment-option" data-payment="GCASH" onclick="selectPayment('GCASH')">
+              GCASH
+            </button>
+            <button class="payment-option" data-payment="PAYMAYA" onclick="selectPayment('PAYMAYA')">
+              PAYMAYA
+            </button>
+          </div>
+
+          <div id="walletReferenceWrap" style="display:none">
+            <label id="walletReferenceLabel">Reference No. *</label>
+            <input id="paymentReference" maxlength="50" placeholder="Enter payment reference number">
+          </div>
+
+          <div id="paymentNote" class="small" style="margin-top:10px">
+            Pay at the cashier after submitting your order. Kitchen printing starts only after payment is marked PAID.
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="summary-row total">
+            <span>ORDER TOTAL</span>
+            <span id="checkoutTotal">₱0.00</span>
+          </div>
+        </div>
+
+        <div class="stack">
+          <button id="submitBtn" class="btn primary" onclick="submitOrder()">SUBMIT ORDER</button>
+          <button class="btn light" onclick="showScreen('cartScreen')">BACK TO CART</button>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="statusScreen" class="screen">
+      <div class="section">
+        <div class="status-card">
+
+          <div style="font-size:13px;font-weight:900">ORDER SUBMITTED</div>
+
+          <div id="statusOrderNo" class="order-no">-</div>
+
+          <div id="statusMain" class="status-pill">PENDING</div>
+
+          <div id="statusPayment" class="small"></div>
+
+          <div class="steps">
+            <div id="stepPending" class="step">✓ Order Received</div>
+            <div id="stepPaid" class="step">Payment Confirmed</div>
+            <div id="stepPreparing" class="step">Preparing</div>
+            <div id="stepReady" class="step">Ready for Pickup</div>
+            <div id="stepCompleted" class="step">Completed</div>
+          </div>
+
+          <div class="small" style="margin-top:14px">
+            Keep this page open. Your order status updates automatically.
+          </div>
+
+          <button id="newOrderBtn" class="btn light" style="margin-top:14px;display:none" onclick="startNewOrder()">
+            START NEW ORDER
+          </button>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="bottomBar" class="bottom" style="display:none">
+    <button class="cart-btn" onclick="showScreen('cartScreen')">
+      <span id="bottomCartQty">VIEW CART • 0 item</span>
+      <span id="bottomCartTotal">₱0.00</span>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  /*
+   * =========================================================
+   * CONFIGURATION
+   * =========================================================
+   *
+   * Paste your deployed Google Apps Script /exec URL below.
+   * Example:
+   * https://script.google.com/macros/s/XXXXXXXXXXXX/exec
+   */
+  const API_URL =
+    'https://script.google.com/macros/s/AKfycbwAvUmgzOs4WEIvWnDUxnuvFwPZfcnTothTEt3k4HYuiQRk3_e7S55cNR-k5oGwqVTrmg/exec';
+
+
+  let branchCode =
+    'CAM';
+
+  let branchInfo =
+    null;
+
+  let products =
+    [];
+
+  let selectedCategory =
+    'ALL';
+
+  let cart =
+    {};
+
+  let paymentMethod =
+    'PAY AT CASHIER';
+
+  let currentOrderNo =
+    localStorage.getItem(
+      '2k_current_order_no'
+    ) ||
+    '';
+
+  let currentOrderToken =
+    localStorage.getItem(
+      '2k_current_order_token'
+    ) ||
+    '';
+
+  let statusTimer =
+    null;
+
+
+  document.addEventListener(
+    'DOMContentLoaded',
+    function() {
+
+      if (
+        currentOrderNo &&
+        currentOrderToken
+      ) {
+
+        showStatusScreen();
+        startStatusPolling();
+        return;
+      }
+
+      loadMenu();
+    }
+  );
+
+
+
+
+  function showScreen(
+    id
+  ) {
+
+    document
+      .querySelectorAll(
+        '.screen'
+      )
+      .forEach(
+        function(screen) {
+          screen.classList.remove(
+            'active'
+          );
+        }
+      );
+
+    document.getElementById(
+      id
+    )
+      .classList.add(
+        'active'
+      );
+
+    document.getElementById(
+      'bottomBar'
+    ).style.display =
+      id ===
+        'menuScreen' &&
+      cartQty() > 0
+        ? 'block'
+        : 'none';
+
+    window.scrollTo(
+      0,
+      0
+    );
+  }
+
+
+  async function apiPost(
+    payload
+  ) {
+
+    if (
+      !API_URL ||
+      API_URL.includes(
+        'PASTE_YOUR_'
+      )
+    ) {
+
+      throw new Error(
+        'API URL is not configured yet.'
+      );
+    }
+
+    /*
+     * text/plain keeps the request "simple" so a cross-origin
+     * Google Apps Script web app does not require an OPTIONS preflight.
+     * The backend still receives valid JSON in e.postData.contents.
+     */
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method:
+            'POST',
+          headers: {
+            'Content-Type':
+              'text/plain;charset=utf-8'
+          },
+          body:
+            JSON.stringify(
+              payload
+            ),
+          redirect:
+            'follow'
+        }
+      );
+
+    const text =
+      await response.text();
+
+    let data;
+
+    try {
+
+      data =
+        JSON.parse(
+          text
+        );
+
+    } catch (
+      error
+    ) {
+
+      throw new Error(
+        'Invalid server response.'
+      );
+    }
+
+    if (
+      !data.success
+    ) {
+
+      throw new Error(
+        data.error ||
+        'Server request failed.'
+      );
+    }
+
+    return data;
+  }
+
+
+  async function loadMenu() {
+
+    showScreen(
+      'menuScreen'
+    );
+
+    document.getElementById(
+      'menuMessage'
+    ).innerHTML =
+      '<div class="loading">Loading menu...</div>';
+
+    document.getElementById(
+      'productList'
+    ).innerHTML =
+      '';
+
+    try {
+
+      const data =
+        await apiPost({
+          action:
+            'getOnlineMenu',
+          branchCode:
+            branchCode
+        });
+
+      branchInfo =
+        data.branch;
+
+      products =
+        Array.isArray(
+          data.products
+        )
+          ? data.products
+          : [];
+
+      document.getElementById(
+        'branchLabel'
+      ).textContent =
+        (
+          branchInfo.branchName ||
+          branchInfo.branchCode
+        ) +
+        ' • SELF ORDER';
+
+      document.getElementById(
+        'menuMessage'
+      ).innerHTML =
+        '';
+
+      renderCategories();
+      renderProducts();
+
+    } catch (
+      error
+    ) {
+
+      document.getElementById(
+        'menuMessage'
+      ).innerHTML =
+        '<div class="error">' +
+        escapeHtml(
+          error.message
+        ) +
+        '</div>';
+    }
+  }
+
+
+  function renderCategories() {
+
+    const categories =
+      [
+        'ALL',
+        ...new Set(
+          products
+            .map(
+              function(product) {
+                return (
+                  product.category ||
+                  'OTHER'
+                );
+              }
+            )
+        )
+      ];
+
+    document.getElementById(
+      'categoryBar'
+    ).innerHTML =
+      categories
+        .map(
+          function(category) {
+
+            return (
+              '<button class="chip ' +
+              (
+                selectedCategory ===
+                  category
+                  ? 'active'
+                  : ''
+              ) +
+              '" onclick="setCategory(\'' +
+              jsEscape(
+                category
+              ) +
+              '\')">' +
+              escapeHtml(
+                category
+              ) +
+              '</button>'
+            );
+          }
+        )
+        .join(
+          ''
+        );
+  }
+
+
+  function setCategory(
+    category
+  ) {
+
+    selectedCategory =
+      category;
+
+    renderCategories();
+    renderProducts();
+  }
+
+
+  function renderProducts() {
+
+    const search =
+      document.getElementById(
+        'searchInput'
+      )
+        .value
+        .trim()
+        .toLowerCase();
+
+    const visible =
+      products.filter(
+        function(product) {
+
+          const categoryOk =
+            selectedCategory ===
+              'ALL' ||
+            (
+              product.category ||
+              'OTHER'
+            ) ===
+              selectedCategory;
+
+          const searchOk =
+            !search ||
+            (
+              product.name +
+              ' ' +
+              product.category
+            )
+              .toLowerCase()
+              .includes(
+                search
+              );
+
+          return (
+            categoryOk &&
+            searchOk
+          );
+        }
+      );
+
+    const list =
+      document.getElementById(
+        'productList'
+      );
+
+    if (
+      visible.length ===
+        0
+    ) {
+
+      list.innerHTML =
+        '<div class="empty">No available products found.</div>';
+
+      return;
+    }
+
+    list.innerHTML =
+      visible
+        .map(
+          function(product) {
+
+            return (
+              '<div class="product">' +
+                '<div>' +
+                  '<div class="product-name">' +
+                    escapeHtml(
+                      product.name
+                    ) +
+                  '</div>' +
+                  '<div class="product-cat">' +
+                    escapeHtml(
+                      product.category ||
+                      'OTHER'
+                    ) +
+                  '</div>' +
+                  '<div class="product-price">' +
+                    money(
+                      product.price
+                    ) +
+                  '</div>' +
+                  '<div class="stock">Available: ' +
+                    Number(
+                      product.stock ||
+                      0
+                    ) +
+                  '</div>' +
+                '</div>' +
+
+                '<button class="add-btn" onclick="addToCart(' +
+                  Number(
+                    product.productId
+                  ) +
+                ')">ADD</button>' +
+              '</div>'
+            );
+          }
+        )
+        .join(
+          ''
+        );
+  }
+
+
+  function findProduct(
+    productId
+  ) {
+
+    return products.find(
+      function(product) {
+        return (
+          Number(
+            product.productId
+          ) ===
+          Number(
+            productId
+          )
+        );
+      }
+    );
+  }
+
+
+  function addToCart(
+    productId
+  ) {
+
+    const product =
+      findProduct(
+        productId
+      );
+
+    if (!product) {
+      return;
+    }
+
+    const key =
+      String(
+        productId
+      );
+
+    const current =
+      cart[key] ||
+      {
+        productId:
+          Number(
+            productId
+          ),
+        quantity:
+          0,
+        itemNote:
+          ''
+      };
+
+    if (
+      current.quantity >=
+      Number(
+        product.stock ||
+        0
+      )
+    ) {
+
+      alert(
+        'Maximum available stock reached.'
+      );
+
+      return;
+    }
+
+    current.quantity++;
+
+    cart[key] =
+      current;
+
+    updateCartBar();
+  }
+
+
+  function cartEntries() {
+
+    return Object.values(
+      cart
+    )
+      .filter(
+        function(item) {
+          return (
+            item.quantity >
+            0
+          );
+        }
+      );
+  }
+
+
+  function cartQty() {
+
+    return cartEntries()
+      .reduce(
+        function(total, item) {
+          return (
+            total +
+            item.quantity
+          );
+        },
+        0
+      );
+  }
+
+
+  function cartTotal() {
+
+    return cartEntries()
+      .reduce(
+        function(total, item) {
+
+          const product =
+            findProduct(
+              item.productId
+            );
+
+          if (!product) {
+            return total;
+          }
+
+          return (
+            total +
+            Number(
+              product.price
+            ) *
+            item.quantity
+          );
+        },
+        0
+      );
+  }
+
+
+  function updateCartBar() {
+
+    const qty =
+      cartQty();
+
+    document.getElementById(
+      'bottomCartQty'
+    ).textContent =
+      'VIEW CART • ' +
+      qty +
+      (
+        qty === 1
+          ? ' item'
+          : ' items'
+      );
+
+    document.getElementById(
+      'bottomCartTotal'
+    ).textContent =
+      money(
+        cartTotal()
+      );
+
+    document.getElementById(
+      'bottomBar'
+    ).style.display =
+      qty > 0 &&
+      document.getElementById(
+        'menuScreen'
+      )
+        .classList
+        .contains(
+          'active'
+        )
+        ? 'block'
+        : 'none';
+  }
+
+
+  function renderCart() {
+
+    const entries =
+      cartEntries();
+
+    const container =
+      document.getElementById(
+        'cartLines'
+      );
+
+    if (
+      entries.length ===
+        0
+    ) {
+
+      container.innerHTML =
+        '<div class="empty">Your cart is empty.</div>';
+
+      return;
+    }
+
+    container.innerHTML =
+      entries
+        .map(
+          function(item) {
+
+            const product =
+              findProduct(
+                item.productId
+              );
+
+            if (!product) {
+              return '';
+            }
+
+            const subtotal =
+              Number(
+                product.price
+              ) *
+              item.quantity;
+
+            return (
+              '<div class="cart-line">' +
+                '<div class="cart-top">' +
+                  '<span>' +
+                    escapeHtml(
+                      product.name
+                    ) +
+                  '</span>' +
+                  '<span>' +
+                    money(
+                      subtotal
+                    ) +
+                  '</span>' +
+                '</div>' +
+
+                '<div class="qty-row">' +
+                  '<div class="qty-controls">' +
+                    '<button class="qty-btn" onclick="changeQty(' +
+                      Number(
+                        item.productId
+                      ) +
+                    ',-1)">−</button>' +
+                    '<strong>' +
+                      item.quantity +
+                    '</strong>' +
+                    '<button class="qty-btn" onclick="changeQty(' +
+                      Number(
+                        item.productId
+                      ) +
+                    ',1)">+</button>' +
+                  '</div>' +
+
+                  '<button class="btn light" style="width:auto;padding:8px 10px" onclick="removeItem(' +
+                    Number(
+                      item.productId
+                    ) +
+                  ')">REMOVE</button>' +
+                '</div>' +
+
+                '<input class="item-note" maxlength="100" placeholder="Special request for this item (optional)" value="' +
+                  escapeAttr(
+                    item.itemNote ||
+                    ''
+                  ) +
+                '" oninput="setItemNote(' +
+                  Number(
+                    item.productId
+                  ) +
+                ',this.value)">' +
+              '</div>'
+            );
+          }
+        )
+        .join(
+          ''
+        );
+
+    document.getElementById(
+      'cartQty'
+    ).textContent =
+      cartQty();
+
+    document.getElementById(
+      'cartTotal'
+    ).textContent =
+      money(
+        cartTotal()
+      );
+  }
+
+
+  function changeQty(
+    productId,
+    delta
+  ) {
+
+    const key =
+      String(
+        productId
+      );
+
+    const item =
+      cart[key];
+
+    if (!item) {
+      return;
+    }
+
+    const product =
+      findProduct(
+        productId
+      );
+
+    const next =
+      item.quantity +
+      delta;
+
+    if (
+      next <= 0
+    ) {
+
+      delete cart[key];
+
+    } else if (
+      product &&
+      next <=
+        Number(
+          product.stock ||
+          0
+        )
+    ) {
+
+      item.quantity =
+        next;
+    }
+
+    renderCart();
+    updateCartBar();
+  }
+
+
+  function removeItem(
+    productId
+  ) {
+
+    delete cart[
+      String(
+        productId
+      )
+    ];
+
+    renderCart();
+    updateCartBar();
+  }
+
+
+  function setItemNote(
+    productId,
+    value
+  ) {
+
+    const item =
+      cart[
+        String(
+          productId
+        )
+      ];
+
+    if (item) {
+      item.itemNote =
+        value;
+    }
+  }
+
+
+  function openCheckout() {
+
+    if (
+      cartQty() <=
+        0
+    ) {
+
+      alert(
+        'Please add at least one item.'
+      );
+
+      return;
+    }
+
+    document.getElementById(
+      'checkoutTotal'
+    ).textContent =
+      money(
+        cartTotal()
+      );
+
+    document.getElementById(
+      'checkoutError'
+    ).innerHTML =
+      '';
+
+    showScreen(
+      'checkoutScreen'
+    );
+  }
+
+
+  function selectPayment(
+    method
+  ) {
+
+    paymentMethod =
+      method;
+
+    document
+      .querySelectorAll(
+        '.payment-option'
+      )
+      .forEach(
+        function(button) {
+
+          button.classList.toggle(
+            'selected',
+            button.dataset.payment ===
+              method
+          );
+        }
+      );
+
+    const wallet =
+      method ===
+        'GCASH' ||
+      method ===
+        'PAYMAYA';
+
+    document.getElementById(
+      'walletReferenceWrap'
+    ).style.display =
+      wallet
+        ? 'block'
+        : 'none';
+
+    document.getElementById(
+      'walletReferenceLabel'
+    ).textContent =
+      method +
+      ' Reference No. *';
+
+    document.getElementById(
+      'paymentNote'
+    ).textContent =
+      method ===
+        'PAY AT CASHIER'
+        ? 'Pay at the cashier after submitting your order. Kitchen printing starts only after payment is marked PAID.'
+        : 'Submit your e-wallet reference number. Staff must verify the payment before the kitchen ticket prints.';
+  }
+
+
+  async function submitOrder() {
+
+    const customerName =
+      document.getElementById(
+        'customerName'
+      )
+        .value
+        .trim();
+
+    const tableNo =
+      document.getElementById(
+        'tableNo'
+      )
+        .value
+        .trim();
+
+    const contactNumber =
+      document.getElementById(
+        'contactNumber'
+      )
+        .value
+        .trim();
+
+    const orderNotes =
+      document.getElementById(
+        'orderNotes'
+      )
+        .value
+        .trim();
+
+    const paymentReference =
+      document.getElementById(
+        'paymentReference'
+      )
+        .value
+        .trim();
+
+    const errorBox =
+      document.getElementById(
+        'checkoutError'
+      );
+
+    errorBox.innerHTML =
+      '';
+
+    if (!customerName) {
+
+      errorBox.innerHTML =
+        '<div class="error">Customer name / nickname is required.</div>';
+
+      return;
+    }
+
+    if (!tableNo) {
+
+      errorBox.innerHTML =
+        '<div class="error">Table number is required.</div>';
+
+      return;
+    }
+
+    if (
+      (
+        paymentMethod ===
+          'GCASH' ||
+        paymentMethod ===
+          'PAYMAYA'
+      ) &&
+      !paymentReference
+    ) {
+
+      errorBox.innerHTML =
+        '<div class="error">Reference number is required for ' +
+        escapeHtml(
+          paymentMethod
+        ) +
+        '.</div>';
+
+      return;
+    }
+
+    const submitButton =
+      document.getElementById(
+        'submitBtn'
+      );
+
+    submitButton.disabled =
+      true;
+
+    submitButton.textContent =
+      'SUBMITTING...';
+
+    try {
+
+      const data =
+        await apiPost({
+          action:
+            'submitOnlineOrder',
+          branchCode:
+            branchCode,
+          customerName:
+            customerName,
+          tableNo:
+            tableNo,
+          contactNumber:
+            contactNumber,
+          orderNotes:
+            orderNotes,
+          paymentMethod:
+            paymentMethod,
+          paymentReference:
+            paymentReference,
+          items:
+            cartEntries()
+              .map(
+                function(item) {
+
+                  return {
+                    productId:
+                      item.productId,
+                    quantity:
+                      item.quantity,
+                    itemNote:
+                      item.itemNote ||
+                      ''
+                  };
+                }
+              )
+        });
+
+      currentOrderNo =
+        data.orderNo;
+
+      currentOrderToken =
+        data.orderToken;
+
+      localStorage.setItem(
+        '2k_current_order_no',
+        currentOrderNo
+      );
+
+      localStorage.setItem(
+        '2k_current_order_token',
+        currentOrderToken
+      );
+
+      cart =
+        {};
+
+      updateCartBar();
+
+      showStatusScreen(
+        data
+      );
+
+      startStatusPolling();
+
+    } catch (
+      error
+    ) {
+
+      errorBox.innerHTML =
+        '<div class="error">' +
+        escapeHtml(
+          error.message
+        ) +
+        '</div>';
+
+    } finally {
+
+      submitButton.disabled =
+        false;
+
+      submitButton.textContent =
+        'SUBMIT ORDER';
+    }
+  }
+
+
+  function showStatusScreen(
+    initial
+  ) {
+
+    showScreen(
+      'statusScreen'
+    );
+
+    document.getElementById(
+      'branchLabel'
+    ).textContent =
+      branchInfo
+        ? (
+            branchInfo.branchName +
+            ' • ORDER STATUS'
+          )
+        : 'ORDER STATUS';
+
+    document.getElementById(
+      'statusOrderNo'
+    ).textContent =
+      currentOrderNo ||
+      '-';
+
+    if (initial) {
+      updateStatusUI(
+        initial
+      );
+    }
+  }
+
+
+  function startStatusPolling() {
+
+    if (
+      statusTimer
+    ) {
+
+      clearInterval(
+        statusTimer
+      );
+    }
+
+    refreshOrderStatus();
+
+    statusTimer =
+      setInterval(
+        refreshOrderStatus,
+        5000
+      );
+  }
+
+
+  async function refreshOrderStatus() {
+
+    if (
+      !currentOrderNo ||
+      !currentOrderToken
+    ) {
+      return;
+    }
+
+    try {
+
+      const data =
+        await apiPost({
+          action:
+            'getOnlineOrderStatus',
+          orderNo:
+            currentOrderNo,
+          orderToken:
+            currentOrderToken
+        });
+
+      updateStatusUI(
+        data.order ||
+        data
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'Status refresh failed',
+        error
+      );
+    }
+  }
+
+
+  function updateStatusUI(
+    order
+  ) {
+
+    const orderStatus =
+      (
+        order.orderStatus ||
+        'PENDING'
+      )
+        .toUpperCase();
+
+    const paymentStatus =
+      (
+        order.paymentStatus ||
+        ''
+      )
+        .toUpperCase();
+
+    document.getElementById(
+      'statusMain'
+    ).textContent =
+      orderStatus;
+
+    document.getElementById(
+      'statusPayment'
+    ).textContent =
+      'Payment: ' +
+      (
+        order.paymentMethod ||
+        paymentMethod
+      ) +
+      (
+        paymentStatus
+          ? ' • ' +
+            paymentStatus
+          : ''
+      );
+
+    setStep(
+      'stepPending',
+      true
+    );
+
+    setStep(
+      'stepPaid',
+      paymentStatus ===
+        'PAID'
+    );
+
+    setStep(
+      'stepPreparing',
+      [
+        'PREPARING',
+        'READY',
+        'COMPLETED'
+      ]
+        .includes(
+          orderStatus
+        )
+    );
+
+    setStep(
+      'stepReady',
+      [
+        'READY',
+        'COMPLETED'
+      ]
+        .includes(
+          orderStatus
+        )
+    );
+
+    setStep(
+      'stepCompleted',
+      orderStatus ===
+        'COMPLETED'
+    );
+
+    const mainStatus =
+      document.getElementById(
+        'statusMain'
+      );
+
+    const newOrderButton =
+      document.getElementById(
+        'newOrderBtn'
+      );
+
+    mainStatus.style.background =
+      '#111111';
+
+    newOrderButton.style.display =
+      'none';
+
+    if (
+      orderStatus ===
+        'REJECTED'
+    ) {
+
+      mainStatus.textContent =
+        'REJECTED';
+
+      mainStatus.style.background =
+        '#c62828';
+
+      newOrderButton.style.display =
+        'block';
+    }
+
+    if (
+      orderStatus ===
+        'COMPLETED'
+    ) {
+
+      newOrderButton.style.display =
+        'block';
+    }
+  }
+
+
+  function setStep(
+    id,
+    done
+  ) {
+
+    document.getElementById(
+      id
+    )
+      .classList
+      .toggle(
+        'done',
+        done
+      );
+  }
+
+
+  function startNewOrder() {
+
+    localStorage.removeItem(
+      '2k_current_order_no'
+    );
+
+    localStorage.removeItem(
+      '2k_current_order_token'
+    );
+
+    currentOrderNo =
+      '';
+
+    currentOrderToken =
+      '';
+
+    cart =
+      {};
+
+    paymentMethod =
+      'PAY AT CASHIER';
+
+    if (
+      statusTimer
+    ) {
+      clearInterval(
+        statusTimer
+      );
+      statusTimer =
+        null;
+    }
+
+    loadMenu();
+  }
+
+
+  function money(
+    value
+  ) {
+
+    return (
+      '₱' +
+      Number(
+        value ||
+        0
+      )
+        .toLocaleString(
+          'en-PH',
+          {
+            minimumFractionDigits:
+              2,
+            maximumFractionDigits:
+              2
+          }
+        )
+    );
+  }
+
+
+  function escapeHtml(
+    value
+  ) {
+
+    return String(
+      value ??
+      ''
+    )
+      .replaceAll(
+        '&',
+        '&amp;'
+      )
+      .replaceAll(
+        '<',
+        '&lt;'
+      )
+      .replaceAll(
+        '>',
+        '&gt;'
+      )
+      .replaceAll(
+        '"',
+        '&quot;'
+      )
+      .replaceAll(
+        "'",
+        '&#039;'
+      );
+  }
+
+
+  function escapeAttr(
+    value
+  ) {
+
+    return escapeHtml(
+      value
+    );
+  }
+
+
+  function jsEscape(
+    value
+  ) {
+
+    return String(
+      value ??
+      ''
+    )
+      .replaceAll(
+        '\\',
+        '\\\\'
+      )
+      .replaceAll(
+        "'",
+        "\\'"
+      );
+  }
+
+
+  /*
+   * Render cart every time cart screen is opened.
+   */
+  const originalShowScreen =
+    showScreen;
+
+  showScreen =
+    function(id) {
+
+      if (
+        id ===
+          'cartScreen'
+      ) {
+        renderCart();
+      }
+
+      originalShowScreen(
+        id
+      );
+    };
+</script>
+
+</body>
+</html>
