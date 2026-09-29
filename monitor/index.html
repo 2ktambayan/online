@@ -180,13 +180,14 @@
     <section id="branches" class="branches"></section>
 
     <div class="sectionTitle">
-      <h2>Online Orders</h2>
+      <h2>Orders Monitor</h2>
       <span id="ordersSummary">Auto refresh: 5 sec</span>
     </div>
 
     <div class="orderFilters">
       <button class="filterBtn active" data-filter="ACTIVE">ACTIVE</button>
       <button class="filterBtn" data-filter="TODAY">TODAY</button>
+      <button class="filterBtn" data-filter="POS">POS</button>
       <button class="filterBtn" data-filter="COMPLETED">COMPLETED</button>
       <button class="filterBtn" data-filter="ALL">ALL</button>
     </div>
@@ -200,7 +201,7 @@
 
   <div id="popup" class="popup">
     <div class="popupCard">
-      <div class="newTitle">● NEW ONLINE ORDER</div>
+      <div id="popupTitle" class="newTitle">● NEW ORDER</div>
       <div id="popupOrderNo" class="popupOrder"></div>
       <div id="popupBranch" class="muted"></div>
       <div id="popupTotal" class="popupTotal"></div>
@@ -286,6 +287,15 @@ function beep() {
 function showPopup(order) {
   if (!alertsEnabled) return;
   beep();
+
+  const sourceType =
+    String(order.sourceType || 'ONLINE').toUpperCase();
+
+  document.getElementById('popupTitle').textContent =
+    sourceType === 'POS'
+      ? '● NEW DIRECT POS ORDER'
+      : '● NEW ONLINE ORDER';
+
   document.getElementById('popupOrderNo').textContent = order.orderNo || 'NEW ORDER';
   document.getElementById('popupBranch').textContent =
     [order.branchName || order.branchCode, order.tableNo ? 'Table ' + order.tableNo : '']
@@ -346,6 +356,10 @@ function getFilteredOrders() {
       return latestOrders.filter(o => !isCompletedOrder(o));
     case 'TODAY':
       return latestOrders.filter(isTodayOrder);
+    case 'POS':
+      return latestOrders.filter(
+        o => String(o.sourceType || '').toUpperCase() === 'POS'
+      );
     case 'COMPLETED':
       return latestOrders.filter(o => isCompletedOrder(o));
     case 'ALL':
@@ -403,6 +417,7 @@ function renderOrders(orders) {
           <div class="amount">${peso(o.totalAmount)}</div>
         </div>
         <div class="tags">
+          <span class="tag">${escapeHtml(o.sourceType || 'ONLINE')}</span>
           <span class="tag ${isNew ? 'new' : ''}">${escapeHtml(o.orderStatus || 'UNKNOWN')}</span>
           <span class="tag ${payment === 'PAID' ? 'paid' : 'unpaid'}">${escapeHtml(o.paymentStatus || 'UNPAID')}</span>
           <span class="tag">${escapeHtml(o.paymentMethod || '')}</span>
