@@ -1323,6 +1323,12 @@
   let statusTimer =
     null;
 
+  const MENU_CACHE_KEY =
+    '2k_online_menu_cache_CAM';
+
+  const MENU_CACHE_MAX_AGE_MS =
+    6 * 60 * 60 * 1000;
+
 
   document.addEventListener(
     'DOMContentLoaded',
@@ -1493,21 +1499,93 @@
       'menuScreen'
     );
 
-    document.getElementById(
-      'menuMessage'
-    ).innerHTML =
-      '<div class="loading">Loading menu...</div>';
-
-    document.getElementById(
-      'productList'
-    ).innerHTML =
-      '';
+    let renderedFromCache =
+      false;
 
     try {
+
+      const cachedRaw =
+        localStorage.getItem(
+          MENU_CACHE_KEY
+        );
+
+      if (
+        cachedRaw
+      ) {
+
+        const cached =
+          JSON.parse(
+            cachedRaw
+          );
+
+        if (
+          cached &&
+          cached.branch &&
+          Array.isArray(
+            cached.products
+          )
+        ) {
+
+          branchInfo =
+            cached.branch;
+
+          products =
+            cached.products;
+
+          document.getElementById(
+            'branchLabel'
+          ).textContent =
+            (
+              branchInfo.branchName ||
+              branchInfo.branchCode ||
+              'Camambugan Branch'
+            ) +
+            ' • SELF ORDER';
+
+          document.getElementById(
+            'menuMessage'
+          ).innerHTML =
+            '';
+
+          renderCategories();
+          renderProducts();
+
+          renderedFromCache =
+            true;
+        }
+      }
+
+    } catch (
+      cacheError
+    ) {
+
+      localStorage.removeItem(
+        MENU_CACHE_KEY
+      );
+    }
+
+
+    if (
+      !renderedFromCache
+    ) {
+
+      document.getElementById(
+        'menuMessage'
+      ).innerHTML =
+        '<div class="loading">Loading menu...</div>';
+
+      document.getElementById(
+        'productList'
+      ).innerHTML =
+        '';
 
       showLoading(
         'Loading menu...'
       );
+    }
+
+
+    try {
 
       const data =
         await apiPost({
@@ -1526,6 +1604,26 @@
         )
           ? data.products
           : [];
+
+      try {
+
+        localStorage.setItem(
+          MENU_CACHE_KEY,
+          JSON.stringify({
+            savedAt:
+              Date.now(),
+            branch:
+              branchInfo,
+            products:
+              products
+          })
+        );
+
+      } catch (
+        cacheSaveError
+      ) {
+        // Cache is optional. Ignore storage quota/private-mode errors.
+      }
 
       document.getElementById(
         'branchLabel'
@@ -1548,18 +1646,34 @@
       error
     ) {
 
-      document.getElementById(
-        'menuMessage'
-      ).innerHTML =
-        '<div class="error">' +
-        escapeHtml(
-          error.message
-        ) +
-        '</div>';
+      if (
+        !renderedFromCache
+      ) {
+
+        document.getElementById(
+          'menuMessage'
+        ).innerHTML =
+          '<div class="error">' +
+          escapeHtml(
+            error.message
+          ) +
+          '</div>';
+
+      } else {
+
+        document.getElementById(
+          'menuMessage'
+        ).innerHTML =
+          '<div style="font-size:11px;color:#777;text-align:center;padding:6px 0;">Showing saved menu • reconnecting in background</div>';
+      }
 
     } finally {
 
-      hideLoading();
+      if (
+        !renderedFromCache
+      ) {
+        hideLoading();
+      }
     }
   }
 
@@ -1749,7 +1863,7 @@
     ) {
 
       return (
-        '<img class="product-image" src="' +
+        '<img class="product-image" loading="lazy" decoding="async" src="' +
         escapeAttr(
           imageUrl
         ) +
@@ -1763,7 +1877,7 @@
 
     return (
       '<div class="product-image-fallback">' +
-        '<img src="logo.png" alt="2K Tambayan Logo" style="width:56px;height:56px;object-fit:contain;border-radius:50%;">' +
+        '<img loading="lazy" decoding="async" src="logo.png" alt="2K Tambayan Logo" style="width:56px;height:56px;object-fit:contain;border-radius:50%;">' +
       '</div>'
     );
   }
