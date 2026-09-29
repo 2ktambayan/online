@@ -71,6 +71,18 @@
     .mini{background:#0d0d0d;border-radius:12px;padding:10px;border:1px solid #232323}
     .mini b{display:block;font-size:15px;margin-top:4px}
     .mini span{font-size:9px;color:var(--muted)}
+    .orderFilters{
+      display:flex;gap:7px;flex-wrap:wrap;margin:0 0 11px;
+    }
+    .filterBtn{
+      border:1px solid #303030;background:#151515;color:#aaa;
+      border-radius:999px;padding:8px 12px;font-size:10px;font-weight:900;
+      cursor:pointer;
+    }
+    .filterBtn.active{
+      border-color:var(--pink);background:#3e0a29;color:#ff8cc4;
+      box-shadow:0 0 12px rgba(255,10,138,.13);
+    }
     .orders{display:flex;flex-direction:column;gap:10px}
     .empty{border:1px dashed #333;border-radius:16px;padding:30px 16px;text-align:center;color:#777}
     .order{
@@ -169,8 +181,16 @@
 
     <div class="sectionTitle">
       <h2>Online Orders</h2>
-      <span>Auto refresh: 5 sec</span>
+      <span id="ordersSummary">Auto refresh: 5 sec</span>
     </div>
+
+    <div class="orderFilters">
+      <button class="filterBtn active" data-filter="ACTIVE">ACTIVE</button>
+      <button class="filterBtn" data-filter="TODAY">TODAY</button>
+      <button class="filterBtn" data-filter="COMPLETED">COMPLETED</button>
+      <button class="filterBtn" data-filter="ALL">ALL</button>
+    </div>
+
     <section id="orders" class="orders">
       <div class="empty">No orders yet.</div>
     </section>
@@ -198,6 +218,8 @@ let alertsEnabled = localStorage.getItem('2kMonitorAlerts') === '1';
 let knownOrders = new Set(JSON.parse(localStorage.getItem('2kKnownOrders') || '[]'));
 let firstSuccessfulLoad = true;
 let audioCtx = null;
+let latestOrders = [];
+let orderFilter = 'ACTIVE';
 
 const peso = n => '₱' + Number(n || 0).toLocaleString('en-PH', {
   minimumFractionDigits: 2,
@@ -301,14 +323,69 @@ function renderBranches(branches) {
   `).join('');
 }
 
+function isTodayOrder(order) {
+  if (!order?.dateSubmitted) return false;
+  const d = new Date(order.dateSubmitted);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+}
+
+function isCompletedOrder(order) {
+  const status = String(order?.orderStatus || '').toUpperCase();
+  return status === 'COMPLETED' || status === 'REJECTED';
+}
+
+function getFilteredOrders() {
+  switch (orderFilter) {
+    case 'ACTIVE':
+      return latestOrders.filter(o => !isCompletedOrder(o));
+    case 'TODAY':
+      return latestOrders.filter(isTodayOrder);
+    case 'COMPLETED':
+      return latestOrders.filter(o => isCompletedOrder(o));
+    case 'ALL':
+    default:
+      return latestOrders;
+  }
+}
+
+function updateFilterButtons() {
+  document.querySelectorAll('.filterBtn').forEach(btn => {
+    btn.classList.toggle(
+      'active',
+      btn.dataset.filter === orderFilter
+    );
+  });
+}
+
 function renderOrders(orders) {
+  latestOrders = Array.isArray(orders) ? orders : [];
+  const visibleOrders = getFilteredOrders();
   const host = document.getElementById('orders');
-  if (!orders || !orders.length) {
-    host.innerHTML = '<div class="empty">No online orders yet.</div>';
+
+  document.getElementById('ordersSummary').textContent =
+    `${visibleOrders.length} shown • Auto refresh: 5 sec`;
+
+  if (!visibleOrders.length) {
+    const emptyText =
+      orderFilter === 'ACTIVE'
+        ? 'No active online orders.'
+        : orderFilter === 'COMPLETED'
+          ? 'No completed orders yet.'
+          : orderFilter === 'TODAY'
+            ? 'No online orders today.'
+            : 'No online orders yet.';
+
+    host.innerHTML = `<div class="empty">${emptyText}</div>`;
     return;
   }
 
-  host.innerHTML = orders.map(o => {
+  host.innerHTML = visibleOrders.map(o => {
     const status = String(o.orderStatus || '').toUpperCase();
     const payment = String(o.paymentStatus || '').toUpperCase();
     const isNew = status === 'ORDER RECEIVED' || status === 'NEW' || status === 'RECEIVED';
@@ -402,6 +479,16 @@ async function refresh() {
     error.classList.add('show');
   }
 }
+
+document.querySelectorAll('.filterBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    orderFilter = btn.dataset.filter || 'ACTIVE';
+    updateFilterButtons();
+    renderOrders(latestOrders);
+  });
+});
+
+updateFilterButtons();
 
 document.getElementById('enableAlerts').addEventListener('click', async () => {
   alertsEnabled = true;
