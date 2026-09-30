@@ -63,16 +63,58 @@
       font-size:15px;
     }
     .note{margin-top:16px;font-size:11px;color:#777;line-height:1.45}
+    .btn.browser{
+      display:inline-block;
+      margin-top:10px;
+      background:#111;
+      color:#fff;
+    }
+    .choice-note{
+      margin-top:13px;
+      font-size:12px;
+      color:#555;
+      line-height:1.45;
+      font-weight:700;
+    }
+    .or{
+      margin:13px 0 2px;
+      font-size:11px;
+      color:#999;
+      font-weight:800;
+      letter-spacing:.6px;
+    }
   </style>
 </head>
 <body>
   <main class="card">
     <img src="../logo.png" alt="2K Tambayan" class="logo" onerror="this.style.display='none'">
     <h1>2K Tambayan Online Order</h1>
-    <div class="sub">Finding the latest Android app version...</div>
+    <div class="sub">Choose how you want to order.</div>
     <div class="spinner" id="spinner"></div>
-    <div class="status" id="status">Please wait.</div>
-    <a class="btn" id="downloadBtn" href="https://github.com/2ktambayan/online/releases/download/v1.0.0/app-release.apk">DOWNLOAD APK</a>
+    <div class="status" id="status">Checking the latest Android app...</div>
+
+    <a
+      class="btn"
+      id="downloadBtn"
+      href="https://github.com/2ktambayan/online/releases/download/v1.0.0/app-release.apk"
+    >
+      DOWNLOAD ANDROID APP
+    </a>
+
+    <div class="or">OR</div>
+
+    <a
+      class="btn browser"
+      id="browserOrderBtn"
+      href="https://2ktambayan.github.io/online/"
+    >
+      ORDER IN BROWSER
+    </a>
+
+    <div class="choice-note">
+      No installation needed for browser ordering.
+    </div>
+
     <div class="note">
       Android may ask permission to install apps from your browser the first time.
     </div>
@@ -105,11 +147,13 @@
       throw new Error('APK asset not found');
     }
 
-    status.textContent = 'Starting latest app download...';
-    window.location.replace(apk.browser_download_url);
+    status.textContent = 'Latest Android app is ready.';
+    spinner.style.display = 'none';
+    btn.style.display = 'inline-block';
+    btn.href = apk.browser_download_url;
 
   } catch (e) {
-    status.textContent = 'Tap below to download the app.';
+    status.textContent = 'You can download the app or continue in your browser.';
     spinner.style.display = 'none';
     btn.style.display = 'inline-block';
     btn.href = fallback;
