@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#111111">
   <title>2K Tambayan Online Order</title>
 
+  <!-- FAST MENU LOAD: warm up the two external hosts used by the app. -->
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+  <link rel="preconnect" href="https://drive.google.com">
+
   <style>
     :root{
       --pink:#ff0a8a;
@@ -1035,6 +1040,153 @@
     }
 
 
+
+    /* =====================================================
+       FAST MENU LOAD / FIRST-OPEN EXPERIENCE
+       ===================================================== */
+
+    .menu-load-card{
+      background:#fff;
+      border:1px solid #f0f0f3;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 7px 20px rgba(31,41,55,.07);
+      margin:12px 0 4px;
+      text-align:center;
+    }
+
+    .menu-load-title{
+      font-size:17px;
+      font-weight:900;
+      color:#202020;
+      margin-top:3px;
+    }
+
+    .menu-load-sub{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.45;
+      margin-top:5px;
+    }
+
+    .menu-load-spinner{
+      width:34px;
+      height:34px;
+      border:4px solid #f2d7e6;
+      border-top-color:var(--pink);
+      border-radius:50%;
+      margin:2px auto 10px;
+      animation:spin .78s linear infinite;
+    }
+
+    .menu-sync-note{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      padding:8px 10px;
+      margin:5px 0 2px;
+      border-radius:999px;
+      background:#fff7fb;
+      border:1px solid #ffd7e9;
+      color:#8e0c50;
+      font-size:10px;
+      font-weight:900;
+    }
+
+    .menu-sync-dot{
+      width:9px;
+      height:9px;
+      border:2px solid #ff74bb;
+      border-top-color:transparent;
+      border-radius:50%;
+      animation:spin .75s linear infinite;
+      flex:0 0 9px;
+    }
+
+    .menu-fresh-note{
+      text-align:center;
+      font-size:10px;
+      color:#69717c;
+      padding:6px 4px 0;
+    }
+
+    .retry-btn{
+      margin-top:12px;
+      width:auto;
+      min-width:130px;
+      border:0;
+      border-radius:10px;
+      padding:10px 14px;
+      background:var(--pink);
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .skeleton-list{
+      display:grid;
+      gap:12px;
+      margin-top:12px;
+    }
+
+    .skeleton-product{
+      background:#fff;
+      border:1px solid #f0f0f3;
+      border-radius:18px;
+      padding:11px 12px;
+      display:grid;
+      grid-template-columns:82px 1fr 72px;
+      gap:12px;
+      align-items:center;
+      overflow:hidden;
+    }
+
+    .sk{
+      position:relative;
+      overflow:hidden;
+      background:#eceef1;
+      border-radius:9px;
+    }
+
+    .sk::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      transform:translateX(-100%);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
+      animation:skeletonSweep 1.05s infinite;
+    }
+
+    .sk-img{width:82px;height:82px;border-radius:16px}
+    .sk-line-a{height:14px;width:76%;margin-bottom:9px}
+    .sk-line-b{height:10px;width:48%;margin-bottom:10px}
+    .sk-line-c{height:14px;width:36%}
+    .sk-btn{height:38px;width:72px;border-radius:12px}
+
+    @keyframes skeletonSweep{
+      100%{transform:translateX(100%)}
+    }
+
+    .product-image{
+      opacity:0;
+      transition:opacity .18s ease;
+    }
+
+    .product-image.loaded{
+      opacity:1;
+    }
+
+    @media(max-width:390px){
+      .skeleton-product{
+        grid-template-columns:70px 1fr 58px;
+        padding:10px;
+      }
+
+      .sk-img{width:70px;height:70px}
+      .sk-btn{width:58px}
+    }
+
   </style>
 </head>
 
@@ -1272,7 +1424,8 @@
 <div id="loadingOverlay" class="loading-overlay hidden">
   <div class="loading-box">
     <div class="spinner"></div>
-    <div id="loadingText" style="font-weight:900">Loading...</div>
+    <div id="loadingText" style="font-weight:900">Please wait...</div>
+    <div id="loadingSubtext" class="small" style="margin-top:7px"></div>
   </div>
 </div>
 
@@ -1323,11 +1476,46 @@
   let statusTimer =
     null;
 
-  const MENU_CACHE_KEY =
-    '2k_online_menu_cache_CAM';
+  /*
+   * FAST MENU CACHE
+   *
+   * We keep a branch-specific menu snapshot on the customer's device.
+   * The snapshot may be shown instantly, then the latest menu is fetched
+   * silently in the background (stale-while-revalidate).
+   */
+  const MENU_CACHE_VERSION =
+    'v2';
 
   const MENU_CACHE_MAX_AGE_MS =
     6 * 60 * 60 * 1000;
+
+  const MENU_CACHE_STALE_LIMIT_MS =
+    7 * 24 * 60 * 60 * 1000;
+
+  const MENU_REQUEST_TIMEOUT_MS =
+    25000;
+
+  let menuSlowTimer =
+    null;
+
+  let menuVerySlowTimer =
+    null;
+
+
+  function menuCacheKey() {
+
+    return (
+      '2k_online_menu_cache_' +
+      MENU_CACHE_VERSION +
+      '_' +
+      String(
+        branchCode ||
+        'DEFAULT'
+      )
+        .trim()
+        .toUpperCase()
+    );
+  }
 
 
   document.addEventListener(
@@ -1391,14 +1579,21 @@
 
 
   function showLoading(
-    message
+    message,
+    subtext
   ) {
 
     document.getElementById(
       'loadingText'
     ).textContent =
       message ||
-      'Loading...';
+      'Please wait...';
+
+    document.getElementById(
+      'loadingSubtext'
+    ).textContent =
+      subtext ||
+      '';
 
     document.getElementById(
       'loadingOverlay'
@@ -1439,24 +1634,78 @@
      * Google Apps Script web app does not require an OPTIONS preflight.
      * The backend still receives valid JSON in e.postData.contents.
      */
-    const response =
-      await fetch(
-        API_URL,
-        {
-          method:
-            'POST',
-          headers: {
-            'Content-Type':
-              'text/plain;charset=utf-8'
-          },
-          body:
-            JSON.stringify(
-              payload
-            ),
-          redirect:
-            'follow'
-        }
-      );
+    const controller =
+      typeof AbortController !==
+        'undefined'
+        ? new AbortController()
+        : null;
+
+    const timeoutId =
+      controller
+        ? setTimeout(
+            function() {
+              controller.abort();
+            },
+            MENU_REQUEST_TIMEOUT_MS
+          )
+        : null;
+
+    let response;
+
+    try {
+
+      response =
+        await fetch(
+          API_URL,
+          {
+            method:
+              'POST',
+            headers: {
+              'Content-Type':
+                'text/plain;charset=utf-8'
+            },
+            body:
+              JSON.stringify(
+                payload
+              ),
+            redirect:
+              'follow',
+            signal:
+              controller
+                ? controller.signal
+                : undefined,
+            cache:
+              'no-store'
+          }
+        );
+
+    } catch (
+      fetchError
+    ) {
+
+      if (
+        fetchError &&
+        fetchError.name ===
+          'AbortError'
+      ) {
+
+        throw new Error(
+          'The menu server is taking too long to respond. Please tap Retry.'
+        );
+      }
+
+      throw fetchError;
+
+    } finally {
+
+      if (
+        timeoutId
+      ) {
+        clearTimeout(
+          timeoutId
+        );
+      }
+    }
 
     const text =
       await response.text();
@@ -1493,20 +1742,224 @@
   }
 
 
+  function menuSkeletonHtml() {
+
+    return (
+      '<div class="skeleton-list">' +
+        [1,2,3,4]
+          .map(
+            function() {
+              return (
+                '<div class="skeleton-product">' +
+                  '<div class="sk sk-img"></div>' +
+                  '<div>' +
+                    '<div class="sk sk-line-a"></div>' +
+                    '<div class="sk sk-line-b"></div>' +
+                    '<div class="sk sk-line-c"></div>' +
+                  '</div>' +
+                  '<div class="sk sk-btn"></div>' +
+                '</div>'
+              );
+            }
+          )
+          .join('') +
+      '</div>'
+    );
+  }
+
+
+  function showFirstMenuLoading(
+    message,
+    detail
+  ) {
+
+    document.getElementById(
+      'menuMessage'
+    ).innerHTML =
+      '<div class="menu-load-card">' +
+        '<div class="menu-load-spinner"></div>' +
+        '<div class="menu-load-title">' +
+          escapeHtml(
+            message ||
+            'Preparing your menu...'
+          ) +
+        '</div>' +
+        '<div class="menu-load-sub">' +
+          escapeHtml(
+            detail ||
+            'Connecting to the branch and loading available products.'
+          ) +
+        '</div>' +
+      '</div>';
+
+    document.getElementById(
+      'productList'
+    ).innerHTML =
+      menuSkeletonHtml();
+  }
+
+
+  function showMenuUpdatingNote() {
+
+    document.getElementById(
+      'menuMessage'
+    ).innerHTML =
+      '<div class="menu-sync-note">' +
+        '<span class="menu-sync-dot"></span>' +
+        '<span>Updating menu in the background...</span>' +
+      '</div>';
+  }
+
+
+  function showMenuFreshNote() {
+
+    document.getElementById(
+      'menuMessage'
+    ).innerHTML =
+      '<div class="menu-fresh-note">Menu updated just now</div>';
+
+    setTimeout(
+      function() {
+
+        const el =
+          document.getElementById(
+            'menuMessage'
+          );
+
+        if (
+          el &&
+          el.textContent.includes(
+            'Menu updated just now'
+          )
+        ) {
+          el.innerHTML =
+            '';
+        }
+      },
+      2200
+    );
+  }
+
+
+  function clearMenuLoadTimers() {
+
+    if (
+      menuSlowTimer
+    ) {
+      clearTimeout(
+        menuSlowTimer
+      );
+
+      menuSlowTimer =
+        null;
+    }
+
+    if (
+      menuVerySlowTimer
+    ) {
+      clearTimeout(
+        menuVerySlowTimer
+      );
+
+      menuVerySlowTimer =
+        null;
+    }
+  }
+
+
+  function startMenuLoadTimers(
+    usingCache
+  ) {
+
+    clearMenuLoadTimers();
+
+    if (
+      usingCache
+    ) {
+      return;
+    }
+
+    menuSlowTimer =
+      setTimeout(
+        function() {
+
+          showFirstMenuLoading(
+            'Still preparing your menu...',
+            'Your connection may be a little slow. We are getting the latest available products.'
+          );
+        },
+        4500
+      );
+
+    menuVerySlowTimer =
+      setTimeout(
+        function() {
+
+          showFirstMenuLoading(
+            'Almost there...',
+            'The branch server is responding slowly. Please keep this page open for a moment.'
+          );
+        },
+        9500
+      );
+  }
+
+
+  function applyMenuData(
+    branch,
+    menuProducts
+  ) {
+
+    branchInfo =
+      branch ||
+      {};
+
+    products =
+      Array.isArray(
+        menuProducts
+      )
+        ? menuProducts
+        : [];
+
+    document.getElementById(
+      'branchLabel'
+    ).textContent =
+      (
+        branchInfo.branchName ||
+        branchInfo.branchCode ||
+        '2K Tambayan Branch'
+      ) +
+      ' • SELF ORDER';
+
+    renderCategories();
+    renderProducts();
+    updateCartBar();
+  }
+
+
   async function loadMenu() {
 
     showScreen(
       'menuScreen'
     );
 
+    hideLoading();
+
     let renderedFromCache =
       false;
 
+    let cachedAgeMs =
+      Number.POSITIVE_INFINITY;
+
+    /*
+     * STEP 1: show a recent saved menu immediately when available.
+     * This makes repeat visits feel instant.
+     */
     try {
 
       const cachedRaw =
         localStorage.getItem(
-          MENU_CACHE_KEY
+          menuCacheKey()
         );
 
       if (
@@ -1518,40 +1971,49 @@
             cachedRaw
           );
 
+        cachedAgeMs =
+          Math.max(
+            0,
+            Date.now() -
+            Number(
+              cached.savedAt ||
+              0
+            )
+          );
+
         if (
           cached &&
           cached.branch &&
           Array.isArray(
             cached.products
-          )
+          ) &&
+          cachedAgeMs <=
+            MENU_CACHE_STALE_LIMIT_MS
         ) {
 
-          branchInfo =
-            cached.branch;
-
-          products =
-            cached.products;
-
-          document.getElementById(
-            'branchLabel'
-          ).textContent =
-            (
-              branchInfo.branchName ||
-              branchInfo.branchCode ||
-              'Camambugan Branch'
-            ) +
-            ' • SELF ORDER';
-
-          document.getElementById(
-            'menuMessage'
-          ).innerHTML =
-            '';
-
-          renderCategories();
-          renderProducts();
+          applyMenuData(
+            cached.branch,
+            cached.products
+          );
 
           renderedFromCache =
             true;
+
+          showMenuUpdatingNote();
+
+          if (
+            cachedAgeMs >
+              MENU_CACHE_MAX_AGE_MS
+          ) {
+
+            document.getElementById(
+              'menuMessage'
+            ).innerHTML =
+              '<div class="menu-sync-note">' +
+                '<span class="menu-sync-dot"></span>' +
+                '<span>Refreshing saved menu with the latest stock and prices...</span>' +
+              '</div>';
+          }
         }
       }
 
@@ -1560,31 +2022,34 @@
     ) {
 
       localStorage.removeItem(
-        MENU_CACHE_KEY
+        menuCacheKey()
       );
     }
 
 
+    /*
+     * STEP 2: first-ever open has no cache, so show a friendly inline
+     * loading experience plus skeleton product cards.
+     */
     if (
       !renderedFromCache
     ) {
 
-      document.getElementById(
-        'menuMessage'
-      ).innerHTML =
-        '<div class="loading">Loading menu...</div>';
-
-      document.getElementById(
-        'productList'
-      ).innerHTML =
-        '';
-
-      showLoading(
-        'Loading menu...'
+      showFirstMenuLoading(
+        'Preparing your menu...',
+        'Connecting to the branch and loading available products.'
       );
     }
 
+    startMenuLoadTimers(
+      renderedFromCache
+    );
 
+
+    /*
+     * STEP 3: always fetch the latest menu.
+     * Even when cache is shown, stock and prices are refreshed silently.
+     */
     try {
 
       const data =
@@ -1595,20 +2060,21 @@
             branchCode
         });
 
-      branchInfo =
-        data.branch;
+      clearMenuLoadTimers();
 
-      products =
+      applyMenuData(
+        data.branch,
         Array.isArray(
           data.products
         )
           ? data.products
-          : [];
+          : []
+      );
 
       try {
 
         localStorage.setItem(
-          MENU_CACHE_KEY,
+          menuCacheKey(),
           JSON.stringify({
             savedAt:
               Date.now(),
@@ -1625,26 +2091,25 @@
         // Cache is optional. Ignore storage quota/private-mode errors.
       }
 
-      document.getElementById(
-        'branchLabel'
-      ).textContent =
-        (
-          branchInfo.branchName ||
-          branchInfo.branchCode
-        ) +
-        ' • SELF ORDER';
+      if (
+        renderedFromCache
+      ) {
 
-      document.getElementById(
-        'menuMessage'
-      ).innerHTML =
-        '';
+        showMenuFreshNote();
 
-      renderCategories();
-      renderProducts();
+      } else {
+
+        document.getElementById(
+          'menuMessage'
+        ).innerHTML =
+          '';
+      }
 
     } catch (
       error
     ) {
+
+      clearMenuLoadTimers();
 
       if (
         !renderedFromCache
@@ -1654,25 +2119,28 @@
           'menuMessage'
         ).innerHTML =
           '<div class="error">' +
-          escapeHtml(
-            error.message
-          ) +
+            '<strong>Unable to load the latest menu.</strong><br>' +
+            escapeHtml(
+              error.message ||
+              'Please check your internet connection.'
+            ) +
+            '<br>' +
+            '<button class="retry-btn" onclick="loadMenu()">RETRY</button>' +
           '</div>';
+
+        document.getElementById(
+          'productList'
+        ).innerHTML =
+          '';
 
       } else {
 
         document.getElementById(
           'menuMessage'
         ).innerHTML =
-          '<div style="font-size:11px;color:#777;text-align:center;padding:6px 0;">Showing saved menu • reconnecting in background</div>';
-      }
-
-    } finally {
-
-      if (
-        !renderedFromCache
-      ) {
-        hideLoading();
+          '<div style="font-size:11px;color:#777;text-align:center;padding:7px 0;">' +
+            'Showing saved menu • latest update is temporarily unavailable' +
+          '</div>';
       }
     }
   }
@@ -1847,23 +2315,76 @@
   }
 
 
+  function optimizedProductImageUrl(
+    rawUrl
+  ) {
+
+    const url =
+      String(
+        rawUrl ||
+        ''
+      )
+        .trim();
+
+    if (
+      !url
+    ) {
+      return '';
+    }
+
+    /*
+     * Product cards are only ~70-82px wide. A 360px Drive thumbnail is
+     * already sharp on high-density phones and downloads much faster than
+     * the old 1200px image on a fresh device.
+     */
+    if (
+      url.includes(
+        'drive.google.com/thumbnail'
+      )
+    ) {
+
+      if (
+        /[?&]sz=w\d+/i.test(
+          url
+        )
+      ) {
+
+        return url.replace(
+          /([?&]sz=)w\d+/i,
+          '$1w360'
+        );
+      }
+
+      return (
+        url +
+        (
+          url.includes('?')
+            ? '&'
+            : '?'
+        ) +
+        'sz=w360'
+      );
+    }
+
+    return url;
+  }
+
+
   function productImageHtml(
     product
   ) {
 
     const imageUrl =
-      String(
-        product.imageUrl ||
-        ''
-      )
-        .trim();
+      optimizedProductImageUrl(
+        product.imageUrl
+      );
 
     if (
       imageUrl
     ) {
 
       return (
-        '<img class="product-image" loading="lazy" decoding="async" src="' +
+        '<img class="product-image" loading="lazy" decoding="async" fetchpriority="low" src="' +
         escapeAttr(
           imageUrl
         ) +
@@ -1871,7 +2392,8 @@
         escapeAttr(
           product.name
         ) +
-        '" onerror="this.onerror=null;this.src=\'logo.png\';">'
+        '" onload="this.classList.add(\'loaded\')" ' +
+        'onerror="this.onerror=null;this.src=\'logo.png\';this.classList.add(\'loaded\');">'
       );
     }
 
