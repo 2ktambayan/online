@@ -299,11 +299,73 @@ let authUser = localStorage.getItem(AUTH_USER_KEY) || '';
 const REFRESH_MS = 5000;
 
 let alertsEnabled = localStorage.getItem('2kMonitorAlerts') === '1';
-let knownOrders = new Set(JSON.parse(localStorage.getItem('2kKnownOrders') || '[]'));
+
+/*
+ * V2 notification identity.
+ *
+ * Old monitor versions remembered only orderNo, e.g. POS-CAM-000001.
+ * After a POS data reset/reseed, the same local sale number can be reused,
+ * so a genuinely new direct POS sale could be treated as already seen.
+ *
+ * V2 includes source + order number + submitted timestamp, making the
+ * identity stable during refresh but new after a reset/reseed.
+ */
+const KNOWN_ORDERS_KEY = '2kMonitorKnownOrdersV2';
+let knownOrders = new Set(
+  JSON.parse(
+    localStorage.getItem(KNOWN_ORDERS_KEY) || '[]'
+  )
+);
+
 let firstSuccessfulLoad = true;
 let audioCtx = null;
 let latestOrders = [];
 let orderFilter = 'ACTIVE';
+
+function orderIdentity(order) {
+  if (!order || !order.orderNo) return '';
+
+  const source =
+    String(order.sourceType || 'ONLINE')
+      .trim()
+      .toUpperCase();
+
+  const orderNo =
+    String(order.orderNo || '')
+      .trim();
+
+  const submitted =
+    String(
+      order.dateSubmitted ||
+      order.epochMillis ||
+      order.createdAt ||
+      ''
+    ).trim();
+
+  return `${source}|${orderNo}|${submitted}`;
+}
+
+function isFreshOrder(order, maxAgeMs = 90000) {
+  const raw =
+    order?.dateSubmitted ||
+    order?.createdAt ||
+    '';
+
+  const timestamp =
+    new Date(raw).getTime();
+
+  if (!Number.isFinite(timestamp)) {
+    return false;
+  }
+
+  const age =
+    Math.abs(
+      Date.now() -
+      timestamp
+    );
+
+  return age <= maxAgeMs;
+}
 
 async function apiPost(payload) {
   const response = await fetch(
@@ -565,34 +627,101 @@ function renderOrders(orders) {
 
 function processNewOrders(orders) {
   const list = orders || [];
-  const unseen = list.filter(o => o.orderNo && !knownOrders.has(o.orderNo));
 
-  // On the very first successful load, establish a baseline.
-  // If there are active orders, alert only the newest one.
+  const unseen =
+    list.filter(order => {
+      const key =
+        orderIdentity(order);
+
+      return (
+        key &&
+        !knownOrders.has(key)
+      );
+    });
+
+  /*
+   * First successful load:
+   *
+   * Establish a baseline so old history does not explode into popups.
+   * But if the newest order is very recent, alert it even when it is a
+   * COMPLETED direct POS transaction. Direct POS orders are completed at
+   * checkout, so the old "active only" first-load rule could suppress them.
+   */
   if (firstSuccessfulLoad) {
-    list.forEach(o => o.orderNo && knownOrders.add(o.orderNo));
+
+    list.forEach(order => {
+      const key =
+        orderIdentity(order);
+
+      if (key) {
+        knownOrders.add(key);
+      }
+    });
+
     firstSuccessfulLoad = false;
     persistKnown();
 
-    const newestActive = list.find(o => {
-      const s = String(o.orderStatus || '').toUpperCase();
-      return s !== 'COMPLETED' && s !== 'REJECTED';
-    });
-    if (newestActive && alertsEnabled) showPopup(newestActive);
+    const newestRecent =
+      list.find(order =>
+        isFreshOrder(
+          order
+        )
+      );
+
+    if (
+      newestRecent &&
+      alertsEnabled
+    ) {
+      showPopup(
+        newestRecent
+      );
+    }
+
     return;
   }
 
   if (unseen.length) {
-    unseen.forEach(o => knownOrders.add(o.orderNo));
+
+    unseen.forEach(order => {
+      const key =
+        orderIdentity(order);
+
+      if (key) {
+        knownOrders.add(key);
+      }
+    });
+
     persistKnown();
-    showPopup(unseen[unseen.length - 1] || unseen[0]);
+
+    /*
+     * The monitor API returns newest-first.
+     * Alert the newest unseen transaction.
+     */
+    showPopup(
+      unseen[0]
+    );
   }
 }
 
 function persistKnown() {
-  const arr = Array.from(knownOrders).slice(-200);
-  knownOrders = new Set(arr);
-  localStorage.setItem('2kKnownOrders', JSON.stringify(arr));
+  const arr =
+    Array.from(
+      knownOrders
+    ).slice(
+      -300
+    );
+
+  knownOrders =
+    new Set(
+      arr
+    );
+
+  localStorage.setItem(
+    KNOWN_ORDERS_KEY,
+    JSON.stringify(
+      arr
+    )
+  );
 }
 
 async function refresh() {
