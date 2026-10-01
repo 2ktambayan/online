@@ -991,6 +991,72 @@
       box-shadow:0 0 0 5px rgba(255,10,138,.10);
     }
 
+
+    .status-items-progress{
+      display:grid;
+      gap:8px;
+      margin:12px 0 4px;
+      text-align:left;
+    }
+
+    .status-item-progress{
+      border:1px solid #ececf0;
+      border-radius:13px;
+      padding:10px 11px;
+      background:#fff;
+      box-shadow:0 2px 8px rgba(31,41,55,.035);
+    }
+
+    .status-item-progress.partial{
+      background:#fff8ec;
+      border-color:#f6d7a9;
+    }
+
+    .status-item-progress.served{
+      background:#eefaf2;
+      border-color:#cfeeda;
+    }
+
+    .status-item-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+
+    .status-item-name{
+      font-size:12px;
+      font-weight:900;
+      line-height:1.3;
+      color:#222;
+    }
+
+    .status-item-count{
+      white-space:nowrap;
+      font-size:10px;
+      font-weight:900;
+      color:var(--muted);
+    }
+
+    .status-item-progress.partial .status-item-count{
+      color:var(--warn);
+    }
+
+    .status-item-progress.served .status-item-count{
+      color:var(--ok);
+    }
+
+    .status-item-follow{
+      margin-top:5px;
+      font-size:10px;
+      font-weight:800;
+      color:var(--warn);
+    }
+
+    .status-item-follow.served{
+      color:var(--ok);
+    }
+
     @media(max-width:560px){
       .topbar::after{display:none}
 
@@ -1397,6 +1463,8 @@
           <div id="statusMessage" class="status-message">
             We received your order.
           </div>
+
+          <div id="statusItemsProgress" class="status-items-progress"></div>
 
           <div class="steps">
             <div id="stepPending" class="step">Order Received</div>
@@ -4280,13 +4348,17 @@
       orderStatus ===
         'READY'
         ? 'READY FOR SERVING'
-        : orderStatus;
+        : orderStatus ===
+            'PARTIALLY SERVED'
+          ? 'PARTIALLY SERVED • TO FOLLOW'
+          : orderStatus;
 
     const waitingStatuses =
       [
         'PENDING',
         'PREPARING',
-        'READY'
+        'READY',
+        'PARTIALLY SERVED'
       ];
 
     mainStatus.innerHTML =
@@ -4300,6 +4372,15 @@
       escapeHtml(
         displayStatus
       );
+
+    if (
+      orderStatus ===
+        'PARTIALLY SERVED'
+    ) {
+
+      mainStatus.style.background =
+        '#b45309';
+    }
 
     document.getElementById(
       'statusPayment'
@@ -4316,16 +4397,6 @@
           : ''
       );
 
-    const sequence =
-      [
-        'PENDING',
-        'PAID',
-        'PREPARING',
-        'READY',
-        'SERVED',
-        'COMPLETED'
-      ];
-
     let currentIndex =
       0;
 
@@ -4336,7 +4407,9 @@
       currentIndex = 5;
     } else if (
       orderStatus ===
-        'SERVED'
+        'SERVED' ||
+      orderStatus ===
+        'PARTIALLY SERVED'
     ) {
       currentIndex = 4;
     } else if (
@@ -4388,7 +4461,10 @@
       'stepServed',
       4,
       currentIndex,
-      'Served'
+      orderStatus ===
+        'PARTIALLY SERVED'
+        ? 'Partially Served • Items To Follow'
+        : 'Served'
     );
 
     setProgressStep(
@@ -4406,23 +4482,30 @@
             'READY'
           ? 'Your order is ready for serving. Our staff will bring it to your table.'
           : orderStatus ===
-              'SERVED'
-            ? 'Your order has been served. Enjoy your meal!'
+              'PARTIALLY SERVED'
+            ? 'Part of your order has been served. The remaining item(s) will follow shortly.'
             : orderStatus ===
-                'COMPLETED'
-              ? 'Order completed. Thank you for ordering!'
-              : paymentStatus ===
-                  'PAID'
-                ? 'Payment confirmed. Your order will be prepared shortly.'
-                : order.paymentMethod ===
-                    'PAY AT CASHIER'
-                  ? 'Please pay at the cashier so the kitchen can start preparing your order.'
-                  : 'Your payment is waiting for staff verification.';
+                'SERVED'
+              ? 'Your order has been served. Finalizing your order now.'
+              : orderStatus ===
+                  'COMPLETED'
+                ? 'Order completed. Thank you for ordering!'
+                : paymentStatus ===
+                    'PAID'
+                  ? 'Payment confirmed. Your order will be prepared shortly.'
+                  : order.paymentMethod ===
+                      'PAY AT CASHIER'
+                    ? 'Please pay at the cashier so the kitchen can start preparing your order.'
+                    : 'Your payment is waiting for staff verification.';
 
     document.getElementById(
       'statusMessage'
     ).textContent =
       message;
+
+    renderStatusItems(
+      order
+    );
 
     if (
       orderStatus ===
@@ -4455,6 +4538,162 @@
       newOrderButton.style.display =
         'block';
     }
+  }
+
+
+  function renderStatusItems(
+    order
+  ) {
+
+    const wrap =
+      document.getElementById(
+        'statusItemsProgress'
+      );
+
+    if (
+      !wrap
+    ) {
+      return;
+    }
+
+    const status =
+      String(
+        order.orderStatus ||
+        ''
+      )
+        .toUpperCase();
+
+    const showStatuses =
+      [
+        'PREPARING',
+        'READY',
+        'PARTIALLY SERVED',
+        'SERVED',
+        'COMPLETED'
+      ];
+
+    const items =
+      Array.isArray(
+        order.items
+      )
+        ? order.items
+        : [];
+
+    if (
+      !showStatuses.includes(
+        status
+      ) ||
+      items.length ===
+        0
+    ) {
+
+      wrap.innerHTML =
+        '';
+
+      return;
+    }
+
+    wrap.innerHTML =
+      items
+        .map(
+          function(item) {
+
+            const quantity =
+              Math.max(
+                0,
+                Number(
+                  item.quantity ||
+                  0
+                )
+              );
+
+            const servedQty =
+              Math.max(
+                0,
+                Math.min(
+                  quantity,
+                  Number(
+                    item.servedQty ||
+                    0
+                  )
+                )
+              );
+
+            const toFollowQty =
+              Math.max(
+                0,
+                quantity -
+                  servedQty
+              );
+
+            const stateClass =
+              toFollowQty ===
+                0
+                ? 'served'
+                : servedQty >
+                    0
+                  ? 'partial'
+                  : '';
+
+            const stateText =
+              toFollowQty ===
+                0
+                ? '✓ FULLY SERVED'
+                : (
+                    servedQty >
+                      0
+                      ? 'TO FOLLOW ' +
+                        toFollowQty
+                      : (
+                          status ===
+                            'PREPARING'
+                            ? 'PREPARING'
+                            : 'TO FOLLOW ' +
+                              toFollowQty
+                        )
+                  );
+
+            return (
+              '<div class="status-item-progress ' +
+              stateClass +
+              '">' +
+                '<div class="status-item-head">' +
+                  '<div class="status-item-name">' +
+                    escapeHtml(
+                      quantity +
+                      'x ' +
+                      (
+                        item.productName ||
+                        'Item'
+                      )
+                    ) +
+                  '</div>' +
+                  '<div class="status-item-count">' +
+                    'Served ' +
+                    servedQty +
+                    '/' +
+                    quantity +
+                  '</div>' +
+                '</div>' +
+                '<div class="status-item-follow ' +
+                  (
+                    toFollowQty ===
+                      0
+                      ? 'served'
+                      : ''
+                  ) +
+                '">' +
+                  escapeHtml(
+                    stateText
+                  ) +
+                '</div>' +
+              '</div>'
+            );
+          }
+        )
+        .join(
+          ''
+        );
   }
 
 
