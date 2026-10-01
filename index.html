@@ -1279,7 +1279,7 @@
       >
       <div class="brand-copy">
         <div class="brand">2K TAMBAYAN RESTO BAR</div>
-        <div id="branchLabel" class="branch">CAMAMBUGAN BRANCH • SELF ORDER</div>
+        <div id="branchLabel" class="branch">2K TAMBAYAN • SELF ORDER</div>
       </div>
     </div>
   </header>
@@ -1566,7 +1566,39 @@
     'https://script.google.com/macros/s/AKfycbwAvUmgzOs4WEIvWnDUxnuvFwPZfcnTothTEt3k4HYuiQRk3_e7S55cNR-k5oGwqVTrmg/exec';
 
 
+  /*
+   * =========================================================
+   * BRANCH-AWARE ONLINE ORDERING
+   * =========================================================
+   *
+   * One GitHub page now serves every branch.
+   *
+   * Examples:
+   * ?branch=CAM
+   * ?branch=CAB
+   *
+   * Existing links without ?branch= continue to default to CAM
+   * for backward compatibility.
+   */
+  const branchParam =
+    new URLSearchParams(
+      window.location.search
+    )
+      .get(
+        'branch'
+      );
+
   let branchCode =
+    String(
+      branchParam ||
+      'CAM'
+    )
+      .trim()
+      .toUpperCase()
+      .replace(
+        /[^A-Z0-9_-]/g,
+        ''
+      ) ||
     'CAM';
 
   let branchInfo =
@@ -1597,15 +1629,60 @@
   let paymentMethod =
     'PAY AT CASHIER';
 
-  let currentOrderNo =
+  /*
+   * Keep order sessions and menu cache separate per branch.
+   * This prevents a CAB customer/order from opening in the CAM page
+   * (and vice versa) on the same phone/browser.
+   */
+  const CURRENT_ORDER_NO_KEY =
+    '2k_current_order_no_' +
+    branchCode;
+
+  const CURRENT_ORDER_TOKEN_KEY =
+    '2k_current_order_token_' +
+    branchCode;
+
+  /*
+   * Backward compatibility:
+   * migrate the old CAM-only generic order keys once.
+   */
+  if (
+    branchCode ===
+      'CAM' &&
+    !localStorage.getItem(
+      CURRENT_ORDER_NO_KEY
+    ) &&
     localStorage.getItem(
       '2k_current_order_no'
+    )
+  ) {
+
+    localStorage.setItem(
+      CURRENT_ORDER_NO_KEY,
+      localStorage.getItem(
+        '2k_current_order_no'
+      ) ||
+      ''
+    );
+
+    localStorage.setItem(
+      CURRENT_ORDER_TOKEN_KEY,
+      localStorage.getItem(
+        '2k_current_order_token'
+      ) ||
+      ''
+    );
+  }
+
+  let currentOrderNo =
+    localStorage.getItem(
+      CURRENT_ORDER_NO_KEY
     ) ||
     '';
 
   let currentOrderToken =
     localStorage.getItem(
-      '2k_current_order_token'
+      CURRENT_ORDER_TOKEN_KEY
     ) ||
     '';
 
@@ -1613,7 +1690,9 @@
     null;
 
   const MENU_CACHE_KEY =
-    '2k_online_menu_cache_CAM_FLEX_V1';
+    '2k_online_menu_cache_' +
+    branchCode +
+    '_FLEX_V2';
 
   const MENU_CACHE_MAX_AGE_MS =
     6 * 60 * 60 * 1000;
@@ -1827,7 +1906,7 @@
             (
               branchInfo.branchName ||
               branchInfo.branchCode ||
-              'Camambugan Branch'
+              branchCode
             ) +
             ' • SELF ORDER';
 
@@ -4175,12 +4254,12 @@
         data.orderToken;
 
       localStorage.setItem(
-        '2k_current_order_no',
+        CURRENT_ORDER_NO_KEY,
         currentOrderNo
       );
 
       localStorage.setItem(
-        '2k_current_order_token',
+        CURRENT_ORDER_TOKEN_KEY,
         currentOrderToken
       );
 
@@ -4232,10 +4311,17 @@
     ).textContent =
       branchInfo
         ? (
-            branchInfo.branchName +
+            (
+              branchInfo.branchName ||
+              branchInfo.branchCode ||
+              branchCode
+            ) +
             ' • ORDER STATUS'
           )
-        : 'ORDER STATUS';
+        : (
+            branchCode +
+            ' • ORDER STATUS'
+          );
 
     document.getElementById(
       'statusOrderNo'
@@ -4768,12 +4854,26 @@
   function startNewOrder() {
 
     localStorage.removeItem(
-      '2k_current_order_no'
+      CURRENT_ORDER_NO_KEY
     );
 
     localStorage.removeItem(
-      '2k_current_order_token'
+      CURRENT_ORDER_TOKEN_KEY
     );
+
+    if (
+      branchCode ===
+        'CAM'
+    ) {
+
+      localStorage.removeItem(
+        '2k_current_order_no'
+      );
+
+      localStorage.removeItem(
+        '2k_current_order_token'
+      );
+    }
 
     currentOrderNo =
       '';
