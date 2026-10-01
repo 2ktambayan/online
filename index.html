@@ -1545,7 +1545,7 @@
     null;
 
   const MENU_CACHE_KEY =
-    '2k_online_menu_cache_CAM';
+    '2k_online_menu_cache_CAM_FLEX_V1';
 
   const MENU_CACHE_MAX_AGE_MS =
     6 * 60 * 60 * 1000;
@@ -1922,6 +1922,124 @@
     product
   ) {
 
+    const explicitGroup =
+      String(
+        product.groupName ||
+        ''
+      )
+        .trim();
+
+    const explicitLabel =
+      String(
+        product.variantLabel ||
+        ''
+      )
+        .trim();
+
+    if (
+      explicitGroup
+    ) {
+
+      const label =
+        explicitLabel ||
+        'Regular';
+
+      const tokens =
+        label
+          .replaceAll(
+            '•',
+            ' '
+          )
+          .split(
+            /\s+/
+          )
+          .filter(Boolean);
+
+      let temperature =
+        null;
+
+      let size =
+        null;
+
+      tokens
+        .forEach(
+          function(token) {
+
+            const upper =
+              String(token)
+                .toUpperCase();
+
+            if (
+              upper ===
+                'HOT'
+            ) {
+              temperature =
+                'Hot';
+            }
+
+            if (
+              upper ===
+                'ICED' ||
+              upper ===
+                'ICE'
+            ) {
+              temperature =
+                'Iced';
+            }
+
+            if (
+              upper ===
+                'S' ||
+              upper ===
+                'SMALL'
+            ) {
+              size =
+                'Small';
+            }
+
+            if (
+              upper ===
+                'M' ||
+              upper ===
+                'MEDIUM'
+            ) {
+              size =
+                'Medium';
+            }
+
+            if (
+              upper ===
+                'L' ||
+              upper ===
+                'LARGE'
+            ) {
+              size =
+                'Large';
+            }
+          }
+        );
+
+      return {
+        product:
+          product,
+        baseName:
+          explicitGroup,
+        label:
+          label,
+        variantType:
+          String(
+            product.variantType ||
+            ''
+          )
+            .trim()
+            .toUpperCase(),
+        temperature:
+          temperature,
+        size:
+          size
+      };
+    }
+
     const originalName =
       String(
         product.name ||
@@ -2080,6 +2198,19 @@
         product,
       baseName:
         baseName,
+      label:
+        [temperature,size]
+          .filter(Boolean)
+          .join(' • ') ||
+        'Regular',
+      variantType:
+        temperature && size
+          ? 'COMBINATION'
+          : temperature
+            ? 'TEMPERATURE'
+            : size
+              ? 'SIZE'
+              : '',
       temperature:
         temperature,
       size:
@@ -2299,7 +2430,12 @@
                 function(variant) {
                   return (
                     !!variant.temperature ||
-                    !!variant.size
+                    !!variant.size ||
+                    (
+                      variant.label &&
+                      variant.label !==
+                        'Regular'
+                    )
                   );
                 }
               );
@@ -2365,6 +2501,12 @@
   function variantLabel(
     variant
   ) {
+
+    if (
+      variant.label
+    ) {
+      return variant.label;
+    }
 
     const parts =
       [
@@ -3021,7 +3163,9 @@
                 ) +
                 ');closeVariantSelector();">' +
                 escapeHtml(
-                  variant.product.name
+                  variantLabel(
+                    variant
+                  )
                 ) +
                 ' • ' +
                 escapeHtml(
@@ -3298,10 +3442,18 @@
                       )
                     ) +
                   '</div>' +
-                  '<div class="stock">Available: ' +
-                    Number(
-                      group.totalStock ||
-                      0
+                  '<div class="stock">' +
+                    (
+                      group.hasOptions
+                        ? (
+                            group.variants.length +
+                            ' available option' +
+                            (group.variants.length === 1 ? '' : 's')
+                          )
+                        : (
+                            'Available: ' +
+                            Number(group.totalStock || 0)
+                          )
                     ) +
                   '</div>' +
                 '</div>' +
