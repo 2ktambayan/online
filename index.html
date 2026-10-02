@@ -1258,8 +1258,8 @@
         onerror="this.style.display='none'"
       >
       <div class="brand-copy">
-        <div class="brand">2K TAMBAYAN RESTO BAR</div>
-        <div id="branchLabel" class="branch">CAMAMBUGAN BRANCH • SELF ORDER</div>
+        <div id="storeTitle" class="brand">2K TAMBAYAN</div>
+        <div id="branchLabel" class="branch">LOADING BRANCH • SELF ORDER</div>
       </div>
     </div>
   </header>
@@ -1513,8 +1513,39 @@
     'https://script.google.com/macros/s/AKfycbwAvUmgzOs4WEIvWnDUxnuvFwPZfcnTothTEt3k4HYuiQRk3_e7S55cNR-k5oGwqVTrmg/exec';
 
 
+  function branchCodeFromUrl() {
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const requested =
+      String(
+        params.get(
+          'branch'
+        ) ||
+        'CAM'
+      )
+        .trim()
+        .toUpperCase();
+
+    /*
+     * Keep the page future-branch friendly while rejecting unsafe values.
+     * Examples:
+     * ?branch=CAM
+     * ?branch=CAB
+     */
+    return /^[A-Z0-9_-]{2,20}$/.test(
+      requested
+    )
+      ? requested
+      : 'CAM';
+  }
+
+
   let branchCode =
-    'CAM';
+    branchCodeFromUrl();
 
   let branchInfo =
     null;
@@ -1531,15 +1562,39 @@
   let paymentMethod =
     'PAY AT CASHIER';
 
+  function currentOrderNoKey() {
+    return (
+      '2k_current_order_no_' +
+      String(
+        branchCode
+      )
+        .trim()
+        .toUpperCase()
+    );
+  }
+
+
+  function currentOrderTokenKey() {
+    return (
+      '2k_current_order_token_' +
+      String(
+        branchCode
+      )
+        .trim()
+        .toUpperCase()
+    );
+  }
+
+
   let currentOrderNo =
     localStorage.getItem(
-      '2k_current_order_no'
+      currentOrderNoKey()
     ) ||
     '';
 
   let currentOrderToken =
     localStorage.getItem(
-      '2k_current_order_token'
+      currentOrderTokenKey()
     ) ||
     '';
 
@@ -1975,6 +2030,87 @@
   }
 
 
+  function applyBranchBranding() {
+
+    const storeLine1 =
+      String(
+        (
+          branchInfo &&
+          branchInfo.storeNameLine1
+        ) ||
+        '2K TAMBAYAN'
+      )
+        .trim();
+
+    /*
+     * Store Name Line 2 is the optional Store Type / Subtitle field.
+     *
+     * CAM example:
+     *   RESTO BAR
+     *
+     * CAB:
+     *   leave blank for now; it can be filled later.
+     */
+    const storeLine2 =
+      String(
+        (
+          branchInfo &&
+          branchInfo.storeNameLine2
+        ) ||
+        ''
+      )
+        .trim();
+
+    const title =
+      [
+        storeLine1,
+        storeLine2
+      ]
+        .filter(
+          function(value) {
+            return !!value;
+          }
+        )
+        .join(
+          ' '
+        );
+
+    const storeTitle =
+      document.getElementById(
+        'storeTitle'
+      );
+
+    if (
+      storeTitle
+    ) {
+      storeTitle.textContent =
+        title ||
+        '2K TAMBAYAN';
+    }
+
+    const actualBranchName =
+      String(
+        (
+          branchInfo &&
+          branchInfo.branchName
+        ) ||
+        (
+          branchInfo &&
+          branchInfo.branchCode
+        ) ||
+        branchCode ||
+        'BRANCH'
+      )
+        .trim();
+
+    document.getElementById(
+      'branchLabel'
+    ).textContent =
+      actualBranchName +
+      ' • SELF ORDER';
+  }
+
+
   function applyMenuData(
     branch,
     menuProducts
@@ -1991,15 +2127,23 @@
         ? menuProducts
         : [];
 
-    document.getElementById(
-      'branchLabel'
-    ).textContent =
-      (
-        branchInfo.branchName ||
-        branchInfo.branchCode ||
-        '2K Tambayan Branch'
-      ) +
-      ' • SELF ORDER';
+    /*
+     * Trust the branch returned by the server after loading.
+     * This also keeps all subsequent order requests tied to the
+     * actual branch that supplied this menu.
+     */
+    if (
+      branchInfo.branchCode
+    ) {
+      branchCode =
+        String(
+          branchInfo.branchCode
+        )
+          .trim()
+          .toUpperCase();
+    }
+
+    applyBranchBranding();
 
     renderCategories();
     renderProducts();
@@ -3113,12 +3257,12 @@
         data.orderToken;
 
       localStorage.setItem(
-        '2k_current_order_no',
+        currentOrderNoKey(),
         currentOrderNo
       );
 
       localStorage.setItem(
-        '2k_current_order_token',
+        currentOrderTokenKey(),
         currentOrderToken
       );
 
@@ -3164,6 +3308,12 @@
     showScreen(
       'statusScreen'
     );
+
+    if (
+      branchInfo
+    ) {
+      applyBranchBranding();
+    }
 
     document.getElementById(
       'branchLabel'
@@ -3535,11 +3685,11 @@
   function startNewOrder() {
 
     localStorage.removeItem(
-      '2k_current_order_no'
+      currentOrderNoKey()
     );
 
     localStorage.removeItem(
-      '2k_current_order_token'
+      currentOrderTokenKey()
     );
 
     currentOrderNo =
