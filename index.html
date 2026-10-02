@@ -1307,6 +1307,114 @@
       .sk-btn{width:58px}
     }
 
+
+    /* =====================================================
+       APP BRANCH SELECTOR
+       ===================================================== */
+    .branch-select-wrap{
+      min-height:calc(100vh - 92px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px 14px 40px;
+    }
+
+    .branch-select-card{
+      width:100%;
+      max-width:520px;
+      background:#fff;
+      border:1px solid #f0f0f3;
+      border-radius:22px;
+      padding:22px 18px;
+      box-shadow:0 12px 32px rgba(31,41,55,.10);
+      text-align:center;
+    }
+
+    .branch-select-logo{
+      width:82px;
+      height:82px;
+      object-fit:contain;
+      border-radius:50%;
+      background:#111;
+      padding:4px;
+      margin:0 auto 12px;
+      box-shadow:0 0 0 5px #fff,0 0 0 8px rgba(255,10,138,.18);
+    }
+
+    .branch-select-title{
+      font-size:24px;
+      font-weight:900;
+      margin:6px 0 4px;
+    }
+
+    .branch-select-sub{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+      margin-bottom:18px;
+    }
+
+    .branch-picker{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      padding:0;
+    }
+
+    .branch-choice{
+      border:2px solid #f1d2e2;
+      background:linear-gradient(180deg,#fff,#fff7fb);
+      border-radius:16px;
+      padding:18px 12px;
+      cursor:pointer;
+      text-align:center;
+      transition:.18s ease;
+      box-shadow:0 5px 14px rgba(31,41,55,.05);
+    }
+
+    .branch-choice:hover{
+      transform:translateY(-1px);
+      border-color:var(--pink);
+      box-shadow:0 9px 20px rgba(255,10,138,.12);
+    }
+
+    .branch-choice-code{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:54px;
+      padding:5px 9px;
+      margin-bottom:8px;
+      border-radius:999px;
+      background:var(--pink);
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .branch-choice-name{
+      font-size:17px;
+      font-weight:900;
+      color:#1f1f1f;
+    }
+
+    .branch-change-btn{
+      margin-top:5px;
+      border:0;
+      background:transparent;
+      color:#ffe2f0;
+      font-size:10px;
+      font-weight:900;
+      text-decoration:underline;
+      cursor:pointer;
+      padding:0;
+    }
+
+    @media(max-width:390px){
+      .branch-picker{grid-template-columns:1fr;}
+      .branch-select-card{padding:20px 15px;}
+    }
+
   </style>
 </head>
 
@@ -1324,7 +1432,8 @@
       >
       <div class="brand-copy">
         <div id="storeTitle" class="brand">2K TAMBAYAN</div>
-        <div id="branchLabel" class="branch">LOADING BRANCH • SELF ORDER</div>
+        <div id="branchLabel" class="branch">SELECT YOUR BRANCH</div>
+        <button id="changeBranchBtn" class="branch-change-btn" type="button" onclick="requestBranchChange()" style="display:none">Change Branch</button>
       </div>
     </div>
   </header>
@@ -1332,6 +1441,27 @@
   <main>
 
     
+
+    <section id="branchScreen" class="screen">
+      <div class="branch-select-wrap">
+        <div class="branch-select-card">
+          <img src="logo.png" alt="2K Tambayan Logo" class="branch-select-logo" onerror="this.style.display='none'">
+          <div class="branch-select-title">Select Branch</div>
+          <div class="branch-select-sub">Choose where you are ordering. Your selection will be saved on this device.</div>
+          <div class="branch-picker">
+            <button class="branch-choice" type="button" onclick="selectAppBranch('CAM')">
+              <div class="branch-choice-code">CAM</div>
+              <div class="branch-choice-name">Camambugan</div>
+            </button>
+            <button class="branch-choice" type="button" onclick="selectAppBranch('CAB')">
+              <div class="branch-choice-code">CAB</div>
+              <div class="branch-choice-name">Cabatuan</div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
 
     <section id="menuScreen" class="screen">
       <div class="section">
@@ -1580,6 +1710,31 @@
     'https://script.google.com/macros/s/AKfycbwAvUmgzOs4WEIvWnDUxnuvFwPZfcnTothTEt3k4HYuiQRk3_e7S55cNR-k5oGwqVTrmg/exec';
 
 
+  const SELECTED_BRANCH_KEY =
+    '2k_selected_branch';
+
+
+  function normalizeAppBranchCode(
+    value
+  ) {
+
+    const code =
+      String(
+        value ||
+        ''
+      )
+        .trim()
+        .toUpperCase();
+
+    return (
+      code === 'CAM' ||
+      code === 'CAB'
+    )
+      ? code
+      : '';
+  }
+
+
   function branchCodeFromUrl() {
 
     const params =
@@ -1587,32 +1742,31 @@
         window.location.search
       );
 
-    const requested =
-      String(
-        params.get(
-          'branch'
-        ) ||
-        'CAM'
+    return normalizeAppBranchCode(
+      params.get(
+        'branch'
       )
-        .trim()
-        .toUpperCase();
+    );
+  }
 
-    /*
-     * Keep the page future-branch friendly while rejecting unsafe values.
-     * Examples:
-     * ?branch=CAM
-     * ?branch=CAB
-     */
-    return /^[A-Z0-9_-]{2,20}$/.test(
-      requested
-    )
-      ? requested
-      : 'CAM';
+
+  function savedAppBranchCode() {
+
+    try {
+      return normalizeAppBranchCode(
+        localStorage.getItem(
+          SELECTED_BRANCH_KEY
+        )
+      );
+    } catch (_) {
+      return '';
+    }
   }
 
 
   let branchCode =
-    branchCodeFromUrl();
+    branchCodeFromUrl() ||
+    savedAppBranchCode();
 
   let branchInfo =
     null;
@@ -1654,16 +1808,24 @@
 
 
   let currentOrderNo =
-    localStorage.getItem(
-      currentOrderNoKey()
-    ) ||
-    '';
+    branchCode
+      ? (
+          localStorage.getItem(
+            currentOrderNoKey()
+          ) ||
+          ''
+        )
+      : '';
 
   let currentOrderToken =
-    localStorage.getItem(
-      currentOrderTokenKey()
-    ) ||
-    '';
+    branchCode
+      ? (
+          localStorage.getItem(
+            currentOrderTokenKey()
+          ) ||
+          ''
+        )
+      : '';
 
   let statusTimer =
     null;
@@ -1715,20 +1877,196 @@
     function() {
 
       if (
+        !branchCode
+      ) {
+        showBranchSelector();
+        return;
+      }
+
+      rememberSelectedBranch();
+
+      if (
         currentOrderNo &&
         currentOrderToken
       ) {
 
         showStatusScreen();
         startStatusPolling();
+        updateBranchChangeVisibility();
         return;
       }
 
       loadMenu();
+      updateBranchChangeVisibility();
     }
   );
 
 
+
+
+  function rememberSelectedBranch() {
+
+    if (
+      !branchCode
+    ) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        SELECTED_BRANCH_KEY,
+        branchCode
+      );
+    } catch (_) {
+      /* Local storage is optional. */
+    }
+  }
+
+
+  function updateBranchChangeVisibility() {
+
+    const button =
+      document.getElementById(
+        'changeBranchBtn'
+      );
+
+    if (
+      !button
+    ) {
+      return;
+    }
+
+    button.style.display =
+      branchCode
+        ? 'inline-block'
+        : 'none';
+  }
+
+
+  function showBranchSelector() {
+
+    hideLoading();
+
+    document.getElementById(
+      'storeTitle'
+    ).textContent =
+      '2K TAMBAYAN';
+
+    document.getElementById(
+      'branchLabel'
+    ).textContent =
+      'SELECT YOUR BRANCH';
+
+    const button =
+      document.getElementById(
+        'changeBranchBtn'
+      );
+
+    if (
+      button
+    ) {
+      button.style.display =
+        'none';
+    }
+
+    showScreen(
+      'branchScreen'
+    );
+  }
+
+
+  function selectAppBranch(
+    code
+  ) {
+
+    const selected =
+      normalizeAppBranchCode(
+        code
+      );
+
+    if (
+      !selected
+    ) {
+      return;
+    }
+
+    branchCode =
+      selected;
+
+    rememberSelectedBranch();
+
+    branchInfo =
+      null;
+
+    products =
+      [];
+
+    selectedCategory =
+      'ALL';
+
+    cart =
+      {};
+
+    currentOrderNo =
+      localStorage.getItem(
+        currentOrderNoKey()
+      ) ||
+      '';
+
+    currentOrderToken =
+      localStorage.getItem(
+        currentOrderTokenKey()
+      ) ||
+      '';
+
+    updateBranchChangeVisibility();
+
+    if (
+      currentOrderNo &&
+      currentOrderToken
+    ) {
+      showStatusScreen();
+      startStatusPolling();
+      return;
+    }
+
+    loadMenu();
+  }
+
+
+  function requestBranchChange() {
+
+    if (
+      currentOrderNo &&
+      currentOrderToken
+    ) {
+      alert(
+        'You still have an active order. Please wait until it is completed before changing branch.'
+      );
+      return;
+    }
+
+    if (
+      statusTimer
+    ) {
+      clearInterval(
+        statusTimer
+      );
+      statusTimer =
+        null;
+    }
+
+    branchInfo =
+      null;
+
+    products =
+      [];
+
+    cart =
+      {};
+
+    showBranchSelector();
+  }
 
 
   function showScreen(
@@ -2208,8 +2546,11 @@
         )
           .trim()
           .toUpperCase();
+
+      rememberSelectedBranch();
     }
 
+    updateBranchChangeVisibility();
     applyBranchBranding();
 
     renderCategories();
