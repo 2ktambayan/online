@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#111111">
   <title>2K Tambayan Online Order</title>
 
+  <!-- FAST MENU LOAD: warm up the two external hosts used by the app. -->
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+  <link rel="preconnect" href="https://drive.google.com">
+
   <style>
     :root{
       --pink:#ff0a8a;
@@ -104,6 +109,61 @@
       background:var(--pink);
       color:#fff;
       border-color:var(--pink);
+    }
+
+    /* =====================================================
+       CATEGORY DROPDOWN FILTER
+       ===================================================== */
+
+    .category-filter{
+      margin-top:10px;
+    }
+
+    .category-filter-label{
+      display:block;
+      margin:0 0 6px 2px;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.8px;
+      color:var(--muted);
+    }
+
+    .category-select-wrap{
+      position:relative;
+      width:100%;
+    }
+
+    .category-select{
+      width:100%;
+      appearance:none;
+      -webkit-appearance:none;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#222;
+      border-radius:14px;
+      padding:13px 44px 13px 14px;
+      font-size:14px;
+      font-weight:800;
+      outline:none;
+      box-shadow:0 4px 14px rgba(31,41,55,.06);
+      cursor:pointer;
+    }
+
+    .category-select:focus{
+      border-color:var(--pink);
+      box-shadow:0 0 0 3px rgba(255,10,138,.10);
+    }
+
+    .category-select-icon{
+      position:absolute;
+      right:15px;
+      top:50%;
+      transform:translateY(-50%);
+      pointer-events:none;
+      color:var(--pink);
+      font-size:20px;
+      font-weight:900;
+      line-height:1;
     }
 
     .product-list{
@@ -991,72 +1051,6 @@
       box-shadow:0 0 0 5px rgba(255,10,138,.10);
     }
 
-
-    .status-items-progress{
-      display:grid;
-      gap:8px;
-      margin:12px 0 4px;
-      text-align:left;
-    }
-
-    .status-item-progress{
-      border:1px solid #ececf0;
-      border-radius:13px;
-      padding:10px 11px;
-      background:#fff;
-      box-shadow:0 2px 8px rgba(31,41,55,.035);
-    }
-
-    .status-item-progress.partial{
-      background:#fff8ec;
-      border-color:#f6d7a9;
-    }
-
-    .status-item-progress.served{
-      background:#eefaf2;
-      border-color:#cfeeda;
-    }
-
-    .status-item-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-    }
-
-    .status-item-name{
-      font-size:12px;
-      font-weight:900;
-      line-height:1.3;
-      color:#222;
-    }
-
-    .status-item-count{
-      white-space:nowrap;
-      font-size:10px;
-      font-weight:900;
-      color:var(--muted);
-    }
-
-    .status-item-progress.partial .status-item-count{
-      color:var(--warn);
-    }
-
-    .status-item-progress.served .status-item-count{
-      color:var(--ok);
-    }
-
-    .status-item-follow{
-      margin-top:5px;
-      font-size:10px;
-      font-weight:800;
-      color:var(--warn);
-    }
-
-    .status-item-follow.served{
-      color:var(--ok);
-    }
-
     @media(max-width:560px){
       .topbar::after{display:none}
 
@@ -1101,165 +1095,151 @@
     }
 
 
-  
+
     /* =====================================================
-       PRODUCT VARIANT SELECTOR
+       FAST MENU LOAD / FIRST-OPEN EXPERIENCE
        ===================================================== */
 
-    .variant-overlay{
-      position:fixed;
-      inset:0;
-      z-index:10000;
-      display:flex;
-      align-items:flex-end;
-      justify-content:center;
-      padding:14px;
-      background:rgba(0,0,0,.48);
-    }
-
-    .variant-overlay.hidden{display:none}
-
-    .variant-sheet{
-      width:min(620px,100%);
-      max-height:min(82vh,720px);
-      overflow:auto;
+    .menu-load-card{
       background:#fff;
-      border-radius:22px 22px 16px 16px;
-      padding:18px;
-      box-shadow:0 18px 50px rgba(0,0,0,.25);
+      border:1px solid #f0f0f3;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 7px 20px rgba(31,41,55,.07);
+      margin:12px 0 4px;
+      text-align:center;
     }
 
-    .variant-head{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      margin-bottom:14px;
-    }
-
-    .variant-head-image{
-      width:72px;
-      height:72px;
-      border-radius:15px;
-      object-fit:cover;
-      background:#fff1f8;
-      flex:0 0 72px;
-    }
-
-    .variant-title{
-      font-size:20px;
-      line-height:1.1;
+    .menu-load-title{
+      font-size:17px;
       font-weight:900;
+      color:#202020;
+      margin-top:3px;
     }
 
-    .variant-sub{
-      margin-top:4px;
+    .menu-load-sub{
       font-size:11px;
       color:var(--muted);
+      line-height:1.45;
+      margin-top:5px;
     }
 
-    .variant-label{
-      margin:14px 0 7px;
-      font-size:11px;
+    .menu-load-spinner{
+      width:34px;
+      height:34px;
+      border:4px solid #f2d7e6;
+      border-top-color:var(--pink);
+      border-radius:50%;
+      margin:2px auto 10px;
+      animation:spin .78s linear infinite;
+    }
+
+    .menu-sync-note{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      padding:8px 10px;
+      margin:5px 0 2px;
+      border-radius:999px;
+      background:#fff7fb;
+      border:1px solid #ffd7e9;
+      color:#8e0c50;
+      font-size:10px;
       font-weight:900;
-      letter-spacing:.4px;
-      color:#444;
     }
 
-    .variant-choice-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:8px;
+    .menu-sync-dot{
+      width:9px;
+      height:9px;
+      border:2px solid #ff74bb;
+      border-top-color:transparent;
+      border-radius:50%;
+      animation:spin .75s linear infinite;
+      flex:0 0 9px;
     }
 
-    .variant-choice-grid.sizes{
-      grid-template-columns:repeat(3,minmax(0,1fr));
+    .menu-fresh-note{
+      text-align:center;
+      font-size:10px;
+      color:#69717c;
+      padding:6px 4px 0;
     }
 
-    .variant-choice{
-      border:1px solid var(--line);
-      background:#fff;
-      color:#222;
-      border-radius:12px;
-      padding:11px 8px;
-      min-height:44px;
+    .retry-btn{
+      margin-top:12px;
+      width:auto;
+      min-width:130px;
+      border:0;
+      border-radius:10px;
+      padding:10px 14px;
+      background:var(--pink);
+      color:#fff;
       font-weight:900;
       cursor:pointer;
     }
 
-    .variant-choice.selected{
-      background:var(--pink);
-      border-color:var(--pink);
-      color:#fff;
-      box-shadow:0 6px 16px rgba(255,10,138,.20);
-    }
-
-    .variant-choice:disabled{
-      opacity:.45;
-      cursor:not-allowed;
-      box-shadow:none;
-    }
-
-    .variant-preview{
-      margin-top:14px;
-      border:1px solid #ffd0e6;
-      background:var(--pink-soft);
-      border-radius:14px;
-      padding:12px;
-    }
-
-    .variant-preview-name{
-      font-size:14px;
-      font-weight:900;
-    }
-
-    .variant-preview-row{
-      margin-top:5px;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-    }
-
-    .variant-preview-price{
-      color:var(--pink);
-      font-size:20px;
-      font-weight:900;
-    }
-
-    .variant-preview-stock{
-      color:var(--muted);
-      font-size:11px;
-      font-weight:800;
-    }
-
-    .variant-actions{
-      margin-top:14px;
+    .skeleton-list{
       display:grid;
-      gap:8px;
+      gap:12px;
+      margin-top:12px;
     }
 
-    .variant-hint{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:10px;
-      line-height:1.4;
+    .skeleton-product{
+      background:#fff;
+      border:1px solid #f0f0f3;
+      border-radius:18px;
+      padding:11px 12px;
+      display:grid;
+      grid-template-columns:82px 1fr 72px;
+      gap:12px;
+      align-items:center;
+      overflow:hidden;
     }
 
-    .product-option-count{
-      margin-top:3px;
-      color:#7b6471;
-      font-size:10px;
-      font-weight:800;
+    .sk{
+      position:relative;
+      overflow:hidden;
+      background:#eceef1;
+      border-radius:9px;
     }
 
-    @media(min-width:621px){
-      .variant-overlay{
-        align-items:center;
+    .sk::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      transform:translateX(-100%);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
+      animation:skeletonSweep 1.05s infinite;
+    }
+
+    .sk-img{width:82px;height:82px;border-radius:16px}
+    .sk-line-a{height:14px;width:76%;margin-bottom:9px}
+    .sk-line-b{height:10px;width:48%;margin-bottom:10px}
+    .sk-line-c{height:14px;width:36%}
+    .sk-btn{height:38px;width:72px;border-radius:12px}
+
+    @keyframes skeletonSweep{
+      100%{transform:translateX(100%)}
+    }
+
+    .product-image{
+      opacity:0;
+      transition:opacity .18s ease;
+    }
+
+    .product-image.loaded{
+      opacity:1;
+    }
+
+    @media(max-width:390px){
+      .skeleton-product{
+        grid-template-columns:70px 1fr 58px;
+        padding:10px;
       }
 
-      .variant-sheet{
-        border-radius:22px;
-      }
+      .sk-img{width:70px;height:70px}
+      .sk-btn{width:58px}
     }
 
   </style>
@@ -1279,7 +1259,7 @@
       >
       <div class="brand-copy">
         <div class="brand">2K TAMBAYAN RESTO BAR</div>
-        <div id="branchLabel" class="branch">2K TAMBAYAN • SELF ORDER</div>
+        <div id="branchLabel" class="branch">CAMAMBUGAN BRANCH • SELF ORDER</div>
       </div>
     </div>
   </header>
@@ -1339,7 +1319,22 @@
           oninput="renderProducts()"
         >
 
-        <div id="categoryBar" class="categories"></div>
+        <div class="category-filter">
+          <label for="categoryFilter" class="category-filter-label">
+            FILTER MENU
+          </label>
+
+          <div class="category-select-wrap">
+            <select
+              id="categoryFilter"
+              class="category-select"
+              onchange="setCategory(this.value)"
+              aria-label="Filter menu by category"
+            ></select>
+
+            <span class="category-select-icon">⌄</span>
+          </div>
+        </div>
 
         <div id="menuMessage"></div>
         <div id="productList" class="product-list"></div>
@@ -1464,8 +1459,6 @@
             We received your order.
           </div>
 
-          <div id="statusItemsProgress" class="status-items-progress"></div>
-
           <div class="steps">
             <div id="stepPending" class="step">Order Received</div>
             <div id="stepPaid" class="step">Payment Confirmed</div>
@@ -1498,57 +1491,11 @@
 
 </div>
 
-
-<div id="variantOverlay" class="variant-overlay hidden" onclick="variantBackdropClick(event)">
-  <div class="variant-sheet" onclick="event.stopPropagation()">
-
-    <div class="variant-head">
-      <div id="variantImageWrap"></div>
-      <div>
-        <div id="variantProductName" class="variant-title">Product</div>
-        <div id="variantProductCategory" class="variant-sub"></div>
-      </div>
-    </div>
-
-    <div id="variantTemperatureSection" style="display:none">
-      <div class="variant-label">TEMPERATURE</div>
-      <div id="variantTemperatureChoices" class="variant-choice-grid"></div>
-    </div>
-
-    <div id="variantSizeSection" style="display:none">
-      <div class="variant-label">SIZE</div>
-      <div id="variantSizeChoices" class="variant-choice-grid sizes"></div>
-    </div>
-
-    <div id="variantDirectSection" style="display:none">
-      <div class="variant-label">OPTIONS</div>
-      <div id="variantDirectChoices" class="stack"></div>
-    </div>
-
-    <div id="variantPreview" class="variant-preview" style="display:none">
-      <div id="variantPreviewName" class="variant-preview-name"></div>
-      <div class="variant-preview-row">
-        <div id="variantPreviewPrice" class="variant-preview-price"></div>
-        <div id="variantPreviewStock" class="variant-preview-stock"></div>
-      </div>
-    </div>
-
-    <div class="variant-actions">
-      <button id="variantAddBtn" class="btn primary" onclick="addSelectedVariant()" disabled>
-        ADD TO ORDER
-      </button>
-      <button class="btn light" onclick="closeVariantSelector()">
-        CANCEL
-      </button>
-    </div>
-
-  </div>
-</div>
-
 <div id="loadingOverlay" class="loading-overlay hidden">
   <div class="loading-box">
     <div class="spinner"></div>
-    <div id="loadingText" style="font-weight:900">Loading...</div>
+    <div id="loadingText" style="font-weight:900">Please wait...</div>
+    <div id="loadingSubtext" class="small" style="margin-top:7px"></div>
   </div>
 </div>
 
@@ -1566,39 +1513,7 @@
     'https://script.google.com/macros/s/AKfycbwAvUmgzOs4WEIvWnDUxnuvFwPZfcnTothTEt3k4HYuiQRk3_e7S55cNR-k5oGwqVTrmg/exec';
 
 
-  /*
-   * =========================================================
-   * BRANCH-AWARE ONLINE ORDERING
-   * =========================================================
-   *
-   * One GitHub page now serves every branch.
-   *
-   * Examples:
-   * ?branch=CAM
-   * ?branch=CAB
-   *
-   * Existing links without ?branch= continue to default to CAM
-   * for backward compatibility.
-   */
-  const branchParam =
-    new URLSearchParams(
-      window.location.search
-    )
-      .get(
-        'branch'
-      );
-
   let branchCode =
-    String(
-      branchParam ||
-      'CAM'
-    )
-      .trim()
-      .toUpperCase()
-      .replace(
-        /[^A-Z0-9_-]/g,
-        ''
-      ) ||
     'CAM';
 
   let branchInfo =
@@ -1606,19 +1521,6 @@
 
   let products =
     [];
-
-
-  let productGroups =
-    [];
-
-  let selectedVariantGroup =
-    null;
-
-  let selectedVariantTemperature =
-    null;
-
-  let selectedVariantSize =
-    null;
 
   let selectedCategory =
     'ALL';
@@ -1629,73 +1531,61 @@
   let paymentMethod =
     'PAY AT CASHIER';
 
-  /*
-   * Keep order sessions and menu cache separate per branch.
-   * This prevents a CAB customer/order from opening in the CAM page
-   * (and vice versa) on the same phone/browser.
-   */
-  const CURRENT_ORDER_NO_KEY =
-    '2k_current_order_no_' +
-    branchCode;
-
-  const CURRENT_ORDER_TOKEN_KEY =
-    '2k_current_order_token_' +
-    branchCode;
-
-  /*
-   * Backward compatibility:
-   * migrate the old CAM-only generic order keys once.
-   */
-  if (
-    branchCode ===
-      'CAM' &&
-    !localStorage.getItem(
-      CURRENT_ORDER_NO_KEY
-    ) &&
-    localStorage.getItem(
-      '2k_current_order_no'
-    )
-  ) {
-
-    localStorage.setItem(
-      CURRENT_ORDER_NO_KEY,
-      localStorage.getItem(
-        '2k_current_order_no'
-      ) ||
-      ''
-    );
-
-    localStorage.setItem(
-      CURRENT_ORDER_TOKEN_KEY,
-      localStorage.getItem(
-        '2k_current_order_token'
-      ) ||
-      ''
-    );
-  }
-
   let currentOrderNo =
     localStorage.getItem(
-      CURRENT_ORDER_NO_KEY
+      '2k_current_order_no'
     ) ||
     '';
 
   let currentOrderToken =
     localStorage.getItem(
-      CURRENT_ORDER_TOKEN_KEY
+      '2k_current_order_token'
     ) ||
     '';
 
   let statusTimer =
     null;
 
-  const MENU_CACHE_KEY =
-    '2k_online_menu_cache_' +
-    branchCode +
-    '_FLEX_V2';
+  /*
+   * FAST MENU CACHE
+   *
+   * We keep a branch-specific menu snapshot on the customer's device.
+   * The snapshot may be shown instantly, then the latest menu is fetched
+   * silently in the background (stale-while-revalidate).
+   */
+  const MENU_CACHE_VERSION =
+    'v2';
 
   const MENU_CACHE_MAX_AGE_MS =
     6 * 60 * 60 * 1000;
+
+  const MENU_CACHE_STALE_LIMIT_MS =
+    7 * 24 * 60 * 60 * 1000;
+
+  const MENU_REQUEST_TIMEOUT_MS =
+    25000;
+
+  let menuSlowTimer =
+    null;
+
+  let menuVerySlowTimer =
+    null;
+
+
+  function menuCacheKey() {
+
+    return (
+      '2k_online_menu_cache_' +
+      MENU_CACHE_VERSION +
+      '_' +
+      String(
+        branchCode ||
+        'DEFAULT'
+      )
+        .trim()
+        .toUpperCase()
+    );
+  }
 
 
   document.addEventListener(
@@ -1759,14 +1649,21 @@
 
 
   function showLoading(
-    message
+    message,
+    subtext
   ) {
 
     document.getElementById(
       'loadingText'
     ).textContent =
       message ||
-      'Loading...';
+      'Please wait...';
+
+    document.getElementById(
+      'loadingSubtext'
+    ).textContent =
+      subtext ||
+      '';
 
     document.getElementById(
       'loadingOverlay'
@@ -1807,24 +1704,78 @@
      * Google Apps Script web app does not require an OPTIONS preflight.
      * The backend still receives valid JSON in e.postData.contents.
      */
-    const response =
-      await fetch(
-        API_URL,
-        {
-          method:
-            'POST',
-          headers: {
-            'Content-Type':
-              'text/plain;charset=utf-8'
-          },
-          body:
-            JSON.stringify(
-              payload
-            ),
-          redirect:
-            'follow'
-        }
-      );
+    const controller =
+      typeof AbortController !==
+        'undefined'
+        ? new AbortController()
+        : null;
+
+    const timeoutId =
+      controller
+        ? setTimeout(
+            function() {
+              controller.abort();
+            },
+            MENU_REQUEST_TIMEOUT_MS
+          )
+        : null;
+
+    let response;
+
+    try {
+
+      response =
+        await fetch(
+          API_URL,
+          {
+            method:
+              'POST',
+            headers: {
+              'Content-Type':
+                'text/plain;charset=utf-8'
+            },
+            body:
+              JSON.stringify(
+                payload
+              ),
+            redirect:
+              'follow',
+            signal:
+              controller
+                ? controller.signal
+                : undefined,
+            cache:
+              'no-store'
+          }
+        );
+
+    } catch (
+      fetchError
+    ) {
+
+      if (
+        fetchError &&
+        fetchError.name ===
+          'AbortError'
+      ) {
+
+        throw new Error(
+          'The menu server is taking too long to respond. Please tap Retry.'
+        );
+      }
+
+      throw fetchError;
+
+    } finally {
+
+      if (
+        timeoutId
+      ) {
+        clearTimeout(
+          timeoutId
+        );
+      }
+    }
 
     const text =
       await response.text();
@@ -1861,20 +1812,224 @@
   }
 
 
+  function menuSkeletonHtml() {
+
+    return (
+      '<div class="skeleton-list">' +
+        [1,2,3,4]
+          .map(
+            function() {
+              return (
+                '<div class="skeleton-product">' +
+                  '<div class="sk sk-img"></div>' +
+                  '<div>' +
+                    '<div class="sk sk-line-a"></div>' +
+                    '<div class="sk sk-line-b"></div>' +
+                    '<div class="sk sk-line-c"></div>' +
+                  '</div>' +
+                  '<div class="sk sk-btn"></div>' +
+                '</div>'
+              );
+            }
+          )
+          .join('') +
+      '</div>'
+    );
+  }
+
+
+  function showFirstMenuLoading(
+    message,
+    detail
+  ) {
+
+    document.getElementById(
+      'menuMessage'
+    ).innerHTML =
+      '<div class="menu-load-card">' +
+        '<div class="menu-load-spinner"></div>' +
+        '<div class="menu-load-title">' +
+          escapeHtml(
+            message ||
+            'Preparing your menu...'
+          ) +
+        '</div>' +
+        '<div class="menu-load-sub">' +
+          escapeHtml(
+            detail ||
+            'Connecting to the branch and loading available products.'
+          ) +
+        '</div>' +
+      '</div>';
+
+    document.getElementById(
+      'productList'
+    ).innerHTML =
+      menuSkeletonHtml();
+  }
+
+
+  function showMenuUpdatingNote() {
+
+    document.getElementById(
+      'menuMessage'
+    ).innerHTML =
+      '<div class="menu-sync-note">' +
+        '<span class="menu-sync-dot"></span>' +
+        '<span>Updating menu in the background...</span>' +
+      '</div>';
+  }
+
+
+  function showMenuFreshNote() {
+
+    document.getElementById(
+      'menuMessage'
+    ).innerHTML =
+      '<div class="menu-fresh-note">Menu updated just now</div>';
+
+    setTimeout(
+      function() {
+
+        const el =
+          document.getElementById(
+            'menuMessage'
+          );
+
+        if (
+          el &&
+          el.textContent.includes(
+            'Menu updated just now'
+          )
+        ) {
+          el.innerHTML =
+            '';
+        }
+      },
+      2200
+    );
+  }
+
+
+  function clearMenuLoadTimers() {
+
+    if (
+      menuSlowTimer
+    ) {
+      clearTimeout(
+        menuSlowTimer
+      );
+
+      menuSlowTimer =
+        null;
+    }
+
+    if (
+      menuVerySlowTimer
+    ) {
+      clearTimeout(
+        menuVerySlowTimer
+      );
+
+      menuVerySlowTimer =
+        null;
+    }
+  }
+
+
+  function startMenuLoadTimers(
+    usingCache
+  ) {
+
+    clearMenuLoadTimers();
+
+    if (
+      usingCache
+    ) {
+      return;
+    }
+
+    menuSlowTimer =
+      setTimeout(
+        function() {
+
+          showFirstMenuLoading(
+            'Still preparing your menu...',
+            'Your connection may be a little slow. We are getting the latest available products.'
+          );
+        },
+        4500
+      );
+
+    menuVerySlowTimer =
+      setTimeout(
+        function() {
+
+          showFirstMenuLoading(
+            'Almost there...',
+            'The branch server is responding slowly. Please keep this page open for a moment.'
+          );
+        },
+        9500
+      );
+  }
+
+
+  function applyMenuData(
+    branch,
+    menuProducts
+  ) {
+
+    branchInfo =
+      branch ||
+      {};
+
+    products =
+      Array.isArray(
+        menuProducts
+      )
+        ? menuProducts
+        : [];
+
+    document.getElementById(
+      'branchLabel'
+    ).textContent =
+      (
+        branchInfo.branchName ||
+        branchInfo.branchCode ||
+        '2K Tambayan Branch'
+      ) +
+      ' • SELF ORDER';
+
+    renderCategories();
+    renderProducts();
+    updateCartBar();
+  }
+
+
   async function loadMenu() {
 
     showScreen(
       'menuScreen'
     );
 
+    hideLoading();
+
     let renderedFromCache =
       false;
 
+    let cachedAgeMs =
+      Number.POSITIVE_INFINITY;
+
+    /*
+     * STEP 1: show a recent saved menu immediately when available.
+     * This makes repeat visits feel instant.
+     */
     try {
 
       const cachedRaw =
         localStorage.getItem(
-          MENU_CACHE_KEY
+          menuCacheKey()
         );
 
       if (
@@ -1886,40 +2041,49 @@
             cachedRaw
           );
 
+        cachedAgeMs =
+          Math.max(
+            0,
+            Date.now() -
+            Number(
+              cached.savedAt ||
+              0
+            )
+          );
+
         if (
           cached &&
           cached.branch &&
           Array.isArray(
             cached.products
-          )
+          ) &&
+          cachedAgeMs <=
+            MENU_CACHE_STALE_LIMIT_MS
         ) {
 
-          branchInfo =
-            cached.branch;
-
-          products =
-            cached.products;
-
-          document.getElementById(
-            'branchLabel'
-          ).textContent =
-            (
-              branchInfo.branchName ||
-              branchInfo.branchCode ||
-              branchCode
-            ) +
-            ' • SELF ORDER';
-
-          document.getElementById(
-            'menuMessage'
-          ).innerHTML =
-            '';
-
-          renderCategories();
-          renderProducts();
+          applyMenuData(
+            cached.branch,
+            cached.products
+          );
 
           renderedFromCache =
             true;
+
+          showMenuUpdatingNote();
+
+          if (
+            cachedAgeMs >
+              MENU_CACHE_MAX_AGE_MS
+          ) {
+
+            document.getElementById(
+              'menuMessage'
+            ).innerHTML =
+              '<div class="menu-sync-note">' +
+                '<span class="menu-sync-dot"></span>' +
+                '<span>Refreshing saved menu with the latest stock and prices...</span>' +
+              '</div>';
+          }
         }
       }
 
@@ -1928,31 +2092,34 @@
     ) {
 
       localStorage.removeItem(
-        MENU_CACHE_KEY
+        menuCacheKey()
       );
     }
 
 
+    /*
+     * STEP 2: first-ever open has no cache, so show a friendly inline
+     * loading experience plus skeleton product cards.
+     */
     if (
       !renderedFromCache
     ) {
 
-      document.getElementById(
-        'menuMessage'
-      ).innerHTML =
-        '<div class="loading">Loading menu...</div>';
-
-      document.getElementById(
-        'productList'
-      ).innerHTML =
-        '';
-
-      showLoading(
-        'Loading menu...'
+      showFirstMenuLoading(
+        'Preparing your menu...',
+        'Connecting to the branch and loading available products.'
       );
     }
 
+    startMenuLoadTimers(
+      renderedFromCache
+    );
 
+
+    /*
+     * STEP 3: always fetch the latest menu.
+     * Even when cache is shown, stock and prices are refreshed silently.
+     */
     try {
 
       const data =
@@ -1963,22 +2130,21 @@
             branchCode
         });
 
-      branchInfo =
-        data.branch;
+      clearMenuLoadTimers();
 
-      products =
+      applyMenuData(
+        data.branch,
         Array.isArray(
           data.products
         )
           ? data.products
-          : [];
-
-      buildProductGroups();
+          : []
+      );
 
       try {
 
         localStorage.setItem(
-          MENU_CACHE_KEY,
+          menuCacheKey(),
           JSON.stringify({
             savedAt:
               Date.now(),
@@ -1995,26 +2161,25 @@
         // Cache is optional. Ignore storage quota/private-mode errors.
       }
 
-      document.getElementById(
-        'branchLabel'
-      ).textContent =
-        (
-          branchInfo.branchName ||
-          branchInfo.branchCode
-        ) +
-        ' • SELF ORDER';
+      if (
+        renderedFromCache
+      ) {
 
-      document.getElementById(
-        'menuMessage'
-      ).innerHTML =
-        '';
+        showMenuFreshNote();
 
-      renderCategories();
-      renderProducts();
+      } else {
+
+        document.getElementById(
+          'menuMessage'
+        ).innerHTML =
+          '';
+      }
 
     } catch (
       error
     ) {
+
+      clearMenuLoadTimers();
 
       if (
         !renderedFromCache
@@ -2024,1383 +2189,34 @@
           'menuMessage'
         ).innerHTML =
           '<div class="error">' +
-          escapeHtml(
-            error.message
-          ) +
+            '<strong>Unable to load the latest menu.</strong><br>' +
+            escapeHtml(
+              error.message ||
+              'Please check your internet connection.'
+            ) +
+            '<br>' +
+            '<button class="retry-btn" onclick="loadMenu()">RETRY</button>' +
           '</div>';
+
+        document.getElementById(
+          'productList'
+        ).innerHTML =
+          '';
 
       } else {
 
         document.getElementById(
           'menuMessage'
         ).innerHTML =
-          '<div style="font-size:11px;color:#777;text-align:center;padding:6px 0;">Showing saved menu • reconnecting in background</div>';
+          '<div style="font-size:11px;color:#777;text-align:center;padding:7px 0;">' +
+            'Showing saved menu • latest update is temporarily unavailable' +
+          '</div>';
       }
-
-    } finally {
-
-      if (
-        !renderedFromCache
-      ) {
-        hideLoading();
-      }
-    }
-  }
-
-
-
-  /* =========================================================
-     ONLINE PRODUCT VARIANT GROUPING
-
-     Existing central inventory rows remain the source of truth.
-     Product names are grouped by recognized suffixes:
-       Hot / Iced
-       S / M / L
-       Small / Medium / Large
-
-     Examples:
-       Cafe Latte Hot M
-       Cafe Latte Iced L
-       Biscoff Milktea M
-       Biscoff Milktea L
-     ========================================================= */
-
-  function parseOnlineVariant(
-    product
-  ) {
-
-    const explicitGroup =
-      String(
-        product.groupName ||
-        ''
-      )
-        .trim();
-
-    const explicitLabel =
-      String(
-        product.variantLabel ||
-        ''
-      )
-        .trim();
-
-    if (
-      explicitGroup
-    ) {
-
-      const label =
-        explicitLabel ||
-        'Regular';
-
-      const tokens =
-        label
-          .replaceAll(
-            '•',
-            ' '
-          )
-          .split(
-            /\s+/
-          )
-          .filter(Boolean);
-
-      let temperature =
-        null;
-
-      let size =
-        null;
-
-      tokens
-        .forEach(
-          function(token) {
-
-            const upper =
-              String(token)
-                .toUpperCase();
-
-            if (
-              upper ===
-                'HOT'
-            ) {
-              temperature =
-                'Hot';
-            }
-
-            if (
-              upper ===
-                'ICED' ||
-              upper ===
-                'ICE'
-            ) {
-              temperature =
-                'Iced';
-            }
-
-            if (
-              upper ===
-                'S' ||
-              upper ===
-                'SMALL'
-            ) {
-              size =
-                'Small';
-            }
-
-            if (
-              upper ===
-                'M' ||
-              upper ===
-                'MEDIUM'
-            ) {
-              size =
-                'Medium';
-            }
-
-            if (
-              upper ===
-                'L' ||
-              upper ===
-                'LARGE'
-            ) {
-              size =
-                'Large';
-            }
-          }
-        );
-
-      return {
-        product:
-          product,
-        baseName:
-          explicitGroup,
-        label:
-          label,
-        variantType:
-          String(
-            product.variantType ||
-            ''
-          )
-            .trim()
-            .toUpperCase(),
-        temperature:
-          temperature,
-        size:
-          size
-      };
-    }
-
-    const originalName =
-      String(
-        product.name ||
-        ''
-      )
-        .trim();
-
-    const words =
-      originalName
-        .split(
-          /\s+/
-        )
-        .filter(Boolean);
-
-    let temperature =
-      null;
-
-    let size =
-      null;
-
-    let changed =
-      true;
-
-    while (
-      words.length >
-        0 &&
-      changed
-    ) {
-
-      changed =
-        false;
-
-      const token =
-        String(
-          words[
-            words.length - 1
-          ] ||
-          ''
-        )
-          .trim()
-          .toUpperCase()
-          .replaceAll(
-            '.',
-            ''
-          );
-
-      if (
-        !temperature
-      ) {
-
-        if (
-          token ===
-          'HOT'
-        ) {
-
-          temperature =
-            'Hot';
-
-          words.pop();
-
-          changed =
-            true;
-
-          continue;
-        }
-
-        if (
-          token ===
-            'ICED' ||
-          token ===
-            'ICE'
-        ) {
-
-          temperature =
-            'Iced';
-
-          words.pop();
-
-          changed =
-            true;
-
-          continue;
-        }
-      }
-
-      if (
-        !size
-      ) {
-
-        if (
-          token ===
-            'S' ||
-          token ===
-            'SMALL'
-        ) {
-
-          size =
-            'Small';
-
-          words.pop();
-
-          changed =
-            true;
-
-          continue;
-        }
-
-        if (
-          token ===
-            'M' ||
-          token ===
-            'MEDIUM'
-        ) {
-
-          size =
-            'Medium';
-
-          words.pop();
-
-          changed =
-            true;
-
-          continue;
-        }
-
-        if (
-          token ===
-            'L' ||
-          token ===
-            'LARGE'
-        ) {
-
-          size =
-            'Large';
-
-          words.pop();
-
-          changed =
-            true;
-
-          continue;
-        }
-      }
-    }
-
-    const baseName =
-      words
-        .join(
-          ' '
-        )
-        .trim() ||
-      originalName;
-
-    return {
-      product:
-        product,
-      baseName:
-        baseName,
-      label:
-        [temperature,size]
-          .filter(Boolean)
-          .join(' • ') ||
-        'Regular',
-      variantType:
-        temperature && size
-          ? 'COMBINATION'
-          : temperature
-            ? 'TEMPERATURE'
-            : size
-              ? 'SIZE'
-              : '',
-      temperature:
-        temperature,
-      size:
-        size
-    };
-  }
-
-
-  function temperatureOrder(
-    value
-  ) {
-
-    if (
-      value ===
-      'Hot'
-    ) {
-      return 0;
-    }
-
-    if (
-      value ===
-      'Iced'
-    ) {
-      return 1;
-    }
-
-    return 2;
-  }
-
-
-  function sizeOrder(
-    value
-  ) {
-
-    if (
-      value ===
-      'Small'
-    ) {
-      return 0;
-    }
-
-    if (
-      value ===
-      'Medium'
-    ) {
-      return 1;
-    }
-
-    if (
-      value ===
-      'Large'
-    ) {
-      return 2;
-    }
-
-    return 3;
-  }
-
-
-  function buildProductGroups() {
-
-    const map =
-      new Map();
-
-    products
-      .forEach(
-        function(product) {
-
-          const parsed =
-            parseOnlineVariant(
-              product
-            );
-
-          const category =
-            String(
-              product.category ||
-              'OTHER'
-            )
-              .trim() ||
-            'OTHER';
-
-          const key =
-            category
-              .toLowerCase() +
-            '::' +
-            parsed.baseName
-              .toLowerCase();
-
-          if (
-            !map.has(
-              key
-            )
-          ) {
-
-            map.set(
-              key,
-              {
-                key:
-                  key,
-                baseName:
-                  parsed.baseName,
-                category:
-                  category,
-                variants:
-                  []
-              }
-            );
-          }
-
-          map
-            .get(
-              key
-            )
-            .variants
-            .push(
-              parsed
-            );
-        }
-      );
-
-    productGroups =
-      Array.from(
-        map.values()
-      )
-        .map(
-          function(group) {
-
-            group.variants
-              .sort(
-                function(a,b) {
-
-                  const t =
-                    temperatureOrder(
-                      a.temperature
-                    ) -
-                    temperatureOrder(
-                      b.temperature
-                    );
-
-                  if (
-                    t !==
-                    0
-                  ) {
-                    return t;
-                  }
-
-                  const s =
-                    sizeOrder(
-                      a.size
-                    ) -
-                    sizeOrder(
-                      b.size
-                    );
-
-                  if (
-                    s !==
-                    0
-                  ) {
-                    return s;
-                  }
-
-                  return (
-                    Number(
-                      a.product.price ||
-                      0
-                    ) -
-                    Number(
-                      b.product.price ||
-                      0
-                    )
-                  );
-                }
-              );
-
-            const prices =
-              group.variants
-                .map(
-                  function(variant) {
-                    return Number(
-                      variant.product.price ||
-                      0
-                    );
-                  }
-                );
-
-            group.minPrice =
-              Math.min.apply(
-                null,
-                prices
-              );
-
-            group.maxPrice =
-              Math.max.apply(
-                null,
-                prices
-              );
-
-            group.totalStock =
-              group.variants
-                .reduce(
-                  function(total, variant) {
-                    return (
-                      total +
-                      Number(
-                        variant.product.stock ||
-                        0
-                      )
-                    );
-                  },
-                  0
-                );
-
-            group.hasOptions =
-              group.variants.length >
-                1 ||
-              group.variants.some(
-                function(variant) {
-                  return (
-                    !!variant.temperature ||
-                    !!variant.size ||
-                    (
-                      variant.label &&
-                      variant.label !==
-                        'Regular'
-                    )
-                  );
-                }
-              );
-
-            group.representative =
-              (
-                group.variants.find(
-                  function(variant) {
-                    return (
-                      Number(
-                        variant.product.stock ||
-                        0
-                      ) >
-                      0
-                    );
-                  }
-                ) ||
-                group.variants[0]
-              )
-                .product;
-
-            return group;
-          }
-        )
-        .sort(
-          function(a,b) {
-            return a.baseName
-              .localeCompare(
-                b.baseName
-              );
-          }
-        );
-  }
-
-
-  function groupPriceText(
-    group
-  ) {
-
-    if (
-      Number(
-        group.minPrice
-      ) ===
-      Number(
-        group.maxPrice
-      )
-    ) {
-
-      return money(
-        group.minPrice
-      );
-    }
-
-    return (
-      'From ' +
-      money(
-        group.minPrice
-      )
-    );
-  }
-
-
-  function variantLabel(
-    variant
-  ) {
-
-    if (
-      variant.label
-    ) {
-      return variant.label;
-    }
-
-    const parts =
-      [
-        variant.temperature,
-        variant.size
-      ]
-        .filter(Boolean);
-
-    return (
-      parts.join(
-        ' • '
-      ) ||
-      'Regular'
-    );
-  }
-
-
-  function findProductGroup(
-    key
-  ) {
-
-    return productGroups.find(
-      function(group) {
-        return (
-          group.key ===
-          key
-        );
-      }
-    );
-  }
-
-
-  function openProductGroup(
-    key
-  ) {
-
-    const group =
-      findProductGroup(
-        key
-      );
-
-    if (
-      !group
-    ) {
-      return;
-    }
-
-    const available =
-      group.variants
-        .filter(
-          function(variant) {
-            return (
-              Number(
-                variant.product.stock ||
-                0
-              ) >
-              0
-            );
-          }
-        );
-
-    if (
-      available.length ===
-      0
-    ) {
-
-      alert(
-        'This product is currently out of stock.'
-      );
-
-      return;
-    }
-
-    if (
-      !group.hasOptions &&
-      available.length ===
-        1
-    ) {
-
-      addToCart(
-        available[0]
-          .product
-          .productId
-      );
-
-      return;
-    }
-
-    selectedVariantGroup =
-      group;
-
-    selectedVariantTemperature =
-      null;
-
-    selectedVariantSize =
-      null;
-
-    const temperatures =
-      group.variants
-        .map(
-          function(variant) {
-            return variant.temperature;
-          }
-        )
-        .filter(Boolean)
-        .filter(
-          function(value,index,array) {
-            return (
-              array.indexOf(
-                value
-              ) ===
-              index
-            );
-          }
-        );
-
-    if (
-      temperatures.length ===
-      1
-    ) {
-
-      selectedVariantTemperature =
-        temperatures[0];
-    }
-
-    renderVariantSelector();
-
-    document.getElementById(
-      'variantOverlay'
-    ).classList.remove(
-      'hidden'
-    );
-  }
-
-
-  function closeVariantSelector() {
-
-    document.getElementById(
-      'variantOverlay'
-    ).classList.add(
-      'hidden'
-    );
-
-    selectedVariantGroup =
-      null;
-
-    selectedVariantTemperature =
-      null;
-
-    selectedVariantSize =
-      null;
-  }
-
-
-  function variantBackdropClick(
-    event
-  ) {
-
-    if (
-      event.target &&
-      event.target.id ===
-        'variantOverlay'
-    ) {
-
-      closeVariantSelector();
-    }
-  }
-
-
-  function chooseVariantTemperature(
-    value
-  ) {
-
-    selectedVariantTemperature =
-      value;
-
-    selectedVariantSize =
-      null;
-
-    renderVariantSelector();
-  }
-
-
-  function chooseVariantSize(
-    value
-  ) {
-
-    selectedVariantSize =
-      value;
-
-    renderVariantSelector();
-  }
-
-
-  function getVariantSelection() {
-
-    const group =
-      selectedVariantGroup;
-
-    if (
-      !group
-    ) {
-      return null;
-    }
-
-    const temperatures =
-      group.variants
-        .map(
-          function(variant) {
-            return variant.temperature;
-          }
-        )
-        .filter(Boolean)
-        .filter(
-          function(value,index,array) {
-            return (
-              array.indexOf(
-                value
-              ) ===
-              index
-            );
-          }
-        );
-
-    const tempFiltered =
-      group.variants
-        .filter(
-          function(variant) {
-
-            return (
-              temperatures.length ===
-                0 ||
-              variant.temperature ===
-                selectedVariantTemperature
-            );
-          }
-        );
-
-    const sizes =
-      tempFiltered
-        .map(
-          function(variant) {
-            return variant.size;
-          }
-        )
-        .filter(Boolean)
-        .filter(
-          function(value,index,array) {
-            return (
-              array.indexOf(
-                value
-              ) ===
-              index
-            );
-          }
-        );
-
-    return (
-      group.variants.find(
-        function(variant) {
-
-          const tempOk =
-            temperatures.length ===
-              0 ||
-            variant.temperature ===
-              selectedVariantTemperature;
-
-          const sizeOk =
-            sizes.length ===
-              0 ||
-            variant.size ===
-              selectedVariantSize;
-
-          return (
-            tempOk &&
-            sizeOk
-          );
-        }
-      ) ||
-      null
-    );
-  }
-
-
-  function addSelectedVariant() {
-
-    const variant =
-      getVariantSelection();
-
-    if (
-      !variant
-    ) {
-      return;
-    }
-
-    if (
-      Number(
-        variant.product.stock ||
-        0
-      ) <=
-      0
-    ) {
-
-      alert(
-        'This option is currently out of stock.'
-      );
-
-      return;
-    }
-
-    addToCart(
-      variant.product.productId
-    );
-
-    closeVariantSelector();
-  }
-
-
-  function renderVariantSelector() {
-
-    const group =
-      selectedVariantGroup;
-
-    if (
-      !group
-    ) {
-      return;
-    }
-
-    const representative =
-      group.representative;
-
-    document.getElementById(
-      'variantProductName'
-    ).textContent =
-      group.baseName;
-
-    document.getElementById(
-      'variantProductCategory'
-    ).textContent =
-      group.category +
-      ' • Select your option';
-
-    document.getElementById(
-      'variantImageWrap'
-    ).innerHTML =
-      productImageHtml(
-        representative
-      )
-        .replace(
-          'class="product-image"',
-          'class="variant-head-image"'
-        )
-        .replace(
-          'class="product-image-fallback"',
-          'class="variant-head-image product-image-fallback"'
-        );
-
-
-    const temperatures =
-      group.variants
-        .map(
-          function(variant) {
-            return variant.temperature;
-          }
-        )
-        .filter(Boolean)
-        .filter(
-          function(value,index,array) {
-            return (
-              array.indexOf(
-                value
-              ) ===
-              index
-            );
-          }
-        );
-
-    const tempSection =
-      document.getElementById(
-        'variantTemperatureSection'
-      );
-
-    const tempChoices =
-      document.getElementById(
-        'variantTemperatureChoices'
-      );
-
-    if (
-      temperatures.length >
-      0
-    ) {
-
-      tempSection.style.display =
-        'block';
-
-      tempChoices.innerHTML =
-        temperatures
-          .map(
-            function(temperature) {
-
-              const hasStock =
-                group.variants
-                  .some(
-                    function(variant) {
-                      return (
-                        variant.temperature ===
-                          temperature &&
-                        Number(
-                          variant.product.stock ||
-                          0
-                        ) >
-                          0
-                      );
-                    }
-                  );
-
-              return (
-                '<button class="variant-choice ' +
-                (
-                  selectedVariantTemperature ===
-                    temperature
-                    ? 'selected'
-                    : ''
-                ) +
-                '" ' +
-                (
-                  hasStock
-                    ? ''
-                    : 'disabled'
-                ) +
-                ' onclick="chooseVariantTemperature(\'' +
-                jsEscape(
-                  temperature
-                ) +
-                '\')">' +
-                escapeHtml(
-                  temperature.toUpperCase()
-                ) +
-                '</button>'
-              );
-            }
-          )
-          .join(
-            ''
-          );
-
-    } else {
-
-      tempSection.style.display =
-        'none';
-
-      selectedVariantTemperature =
-        null;
-    }
-
-
-    const tempFiltered =
-      group.variants
-        .filter(
-          function(variant) {
-
-            return (
-              temperatures.length ===
-                0 ||
-              variant.temperature ===
-                selectedVariantTemperature
-            );
-          }
-        );
-
-    const sizes =
-      tempFiltered
-        .map(
-          function(variant) {
-            return variant.size;
-          }
-        )
-        .filter(Boolean)
-        .filter(
-          function(value,index,array) {
-            return (
-              array.indexOf(
-                value
-              ) ===
-              index
-            );
-          }
-        )
-        .sort(
-          function(a,b) {
-            return (
-              sizeOrder(a) -
-              sizeOrder(b)
-            );
-          }
-        );
-
-    const sizeSection =
-      document.getElementById(
-        'variantSizeSection'
-      );
-
-    const sizeChoices =
-      document.getElementById(
-        'variantSizeChoices'
-      );
-
-    if (
-      (
-        temperatures.length ===
-          0 ||
-        selectedVariantTemperature
-      ) &&
-      sizes.length >
-        0
-    ) {
-
-      sizeSection.style.display =
-        'block';
-
-      if (
-        sizes.length ===
-        1 &&
-        !selectedVariantSize
-      ) {
-
-        selectedVariantSize =
-          sizes[0];
-      }
-
-      sizeChoices.innerHTML =
-        sizes
-          .map(
-            function(size) {
-
-              const variant =
-                tempFiltered.find(
-                  function(item) {
-                    return (
-                      item.size ===
-                      size
-                    );
-                  }
-                );
-
-              const hasStock =
-                !!variant &&
-                Number(
-                  variant.product.stock ||
-                  0
-                ) >
-                  0;
-
-              const priceText =
-                variant
-                  ? money(
-                      variant.product.price
-                    )
-                  : '';
-
-              return (
-                '<button class="variant-choice ' +
-                (
-                  selectedVariantSize ===
-                    size
-                    ? 'selected'
-                    : ''
-                ) +
-                '" ' +
-                (
-                  hasStock
-                    ? ''
-                    : 'disabled'
-                ) +
-                ' onclick="chooseVariantSize(\'' +
-                jsEscape(
-                  size
-                ) +
-                '\')">' +
-                escapeHtml(
-                  size.toUpperCase()
-                ) +
-                '<div style="font-size:10px;margin-top:3px;font-weight:800">' +
-                escapeHtml(
-                  priceText
-                ) +
-                '</div>' +
-                '</button>'
-              );
-            }
-          )
-          .join(
-            '');
-
-    } else {
-
-      sizeSection.style.display =
-        'none';
-
-      selectedVariantSize =
-        null;
-    }
-
-
-    /*
-     * Direct-options fallback for groups that have multiple rows
-     * but no recognized temperature or size suffix.
-     */
-    const directSection =
-      document.getElementById(
-        'variantDirectSection'
-      );
-
-    const directChoices =
-      document.getElementById(
-        'variantDirectChoices'
-      );
-
-    if (
-      temperatures.length ===
-        0 &&
-      sizes.length ===
-        0 &&
-      group.variants.length >
-        1
-    ) {
-
-      directSection.style.display =
-        'block';
-
-      directChoices.innerHTML =
-        group.variants
-          .map(
-            function(variant) {
-
-              const hasStock =
-                Number(
-                  variant.product.stock ||
-                  0
-                ) >
-                  0;
-
-              return (
-                '<button class="btn light" ' +
-                (
-                  hasStock
-                    ? ''
-                    : 'disabled'
-                ) +
-                ' onclick="addToCart(' +
-                Number(
-                  variant.product.productId
-                ) +
-                ');closeVariantSelector();">' +
-                escapeHtml(
-                  variantLabel(
-                    variant
-                  )
-                ) +
-                ' • ' +
-                escapeHtml(
-                  money(
-                    variant.product.price
-                  )
-                ) +
-                (
-                  hasStock
-                    ? ''
-                    : ' • OUT OF STOCK'
-                ) +
-                '</button>'
-              );
-            }
-          )
-          .join(
-            '');
-
-    } else {
-
-      directSection.style.display =
-        'none';
-    }
-
-
-    const selected =
-      getVariantSelection();
-
-    const preview =
-      document.getElementById(
-        'variantPreview'
-      );
-
-    const addButton =
-      document.getElementById(
-        'variantAddBtn'
-      );
-
-    if (
-      selected
-    ) {
-
-      preview.style.display =
-        'block';
-
-      document.getElementById(
-        'variantPreviewName'
-      ).textContent =
-        selected.product.name;
-
-      document.getElementById(
-        'variantPreviewPrice'
-      ).textContent =
-        money(
-          selected.product.price
-        );
-
-      document.getElementById(
-        'variantPreviewStock'
-      ).textContent =
-        'Available: ' +
-        Number(
-          selected.product.stock ||
-          0
-        );
-
-      addButton.disabled =
-        Number(
-          selected.product.stock ||
-          0
-        ) <=
-          0;
-
-    } else {
-
-      preview.style.display =
-        'none';
-
-      addButton.disabled =
-        true;
     }
   }
 
 
   function renderCategories() {
-
-    buildProductGroups();
 
     const categories =
       [
@@ -3418,30 +2234,69 @@
         )
       ];
 
-    document.getElementById(
-      'categoryBar'
-    ).innerHTML =
+    /*
+     * If a previously selected category no longer exists after a menu
+     * refresh, safely return to ALL.
+     */
+    const selectedStillExists =
+      categories.some(
+        function(category) {
+          return (
+            String(category).toUpperCase() ===
+            String(selectedCategory).toUpperCase()
+          );
+        }
+      );
+
+    if (
+      !selectedStillExists
+    ) {
+      selectedCategory =
+        'ALL';
+    }
+
+    const select =
+      document.getElementById(
+        'categoryFilter'
+      );
+
+    if (
+      !select
+    ) {
+      return;
+    }
+
+    select.innerHTML =
       categories
         .map(
           function(category) {
 
+            const isSelected =
+              String(category).toUpperCase() ===
+              String(selectedCategory).toUpperCase();
+
+            const label =
+              category ===
+                'ALL'
+                ? 'All Menu Categories'
+                : category;
+
             return (
-              '<button class="chip ' +
-              (
-                selectedCategory ===
-                  category
-                  ? 'active'
-                  : ''
-              ) +
-              '" onclick="setCategory(\'' +
-              jsEscape(
-                category
-              ) +
-              '\')">' +
+              '<option value="' +
               escapeHtml(
                 category
               ) +
-              '</button>'
+              '"' +
+              (
+                isSelected
+                  ? ' selected'
+                  : ''
+              ) +
+              '>' +
+              escapeHtml(
+                label
+              ) +
+              '</option>'
             );
           }
         )
@@ -3465,8 +2320,6 @@
 
   function renderProducts() {
 
-    buildProductGroups();
-
     const search =
       document.getElementById(
         'searchInput'
@@ -3476,37 +2329,31 @@
         .toLowerCase();
 
     const visible =
-      productGroups.filter(
-        function(group) {
+      products.filter(
+        function(product) {
 
           const categoryOk =
-            selectedCategory ===
+            String(
+              selectedCategory
+            )
+              .toUpperCase() ===
               'ALL' ||
-            group.category ===
-              selectedCategory;
-
-          const variantSearchText =
-            group.variants
-              .map(
-                function(variant) {
-                  return (
-                    variant.product.name ||
-                    ''
-                  );
-                }
-              )
-              .join(
-                ' '
-              );
+            String(
+              product.category ||
+              'OTHER'
+            )
+              .toUpperCase() ===
+            String(
+              selectedCategory
+            )
+              .toUpperCase();
 
           const searchOk =
             !search ||
             (
-              group.baseName +
+              product.name +
               ' ' +
-              group.category +
-              ' ' +
-              variantSearchText
+              product.category
             )
               .toLowerCase()
               .includes(
@@ -3539,24 +2386,7 @@
     list.innerHTML =
       visible
         .map(
-          function(group) {
-
-            const product =
-              group.representative;
-
-            const optionText =
-              group.hasOptions
-                ? (
-                    group.variants.length +
-                    ' option' +
-                    (
-                      group.variants.length ===
-                        1
-                        ? ''
-                        : 's'
-                    )
-                  )
-                : '';
+          function(product) {
 
             return (
               '<div class="product">' +
@@ -3564,58 +2394,33 @@
                 '<div>' +
                   '<div class="product-name">' +
                     escapeHtml(
-                      group.baseName
+                      product.name
                     ) +
                   '</div>' +
                   '<div class="product-cat">' +
                     escapeHtml(
-                      group.category ||
+                      product.category ||
                       'OTHER'
                     ) +
                   '</div>' +
-                  (
-                    optionText
-                      ? '<div class="product-option-count">' +
-                          escapeHtml(
-                            optionText
-                          ) +
-                        '</div>'
-                      : ''
-                  ) +
                   '<div class="product-price">' +
-                    escapeHtml(
-                      groupPriceText(
-                        group
-                      )
+                    money(
+                      product.price
                     ) +
                   '</div>' +
-                  '<div class="stock">' +
-                    (
-                      group.hasOptions
-                        ? (
-                            group.variants.length +
-                            ' available option' +
-                            (group.variants.length === 1 ? '' : 's')
-                          )
-                        : (
-                            'Available: ' +
-                            Number(group.totalStock || 0)
-                          )
+                  '<div class="stock">Available: ' +
+                    Number(
+                      product.stock ||
+                      0
                     ) +
                   '</div>' +
                 '</div>' +
 
-                '<button class="add-btn" onclick="openProductGroup(\'' +
-                  jsEscape(
-                    group.key
+                '<button class="add-btn" onclick="addToCart(' +
+                  Number(
+                    product.productId
                   ) +
-                '\')">' +
-                  (
-                    group.hasOptions
-                      ? 'SELECT'
-                      : 'ADD'
-                  ) +
-                '</button>' +
+                ')">ADD</button>' +
               '</div>'
             );
           }
@@ -3626,23 +2431,76 @@
   }
 
 
+  function optimizedProductImageUrl(
+    rawUrl
+  ) {
+
+    const url =
+      String(
+        rawUrl ||
+        ''
+      )
+        .trim();
+
+    if (
+      !url
+    ) {
+      return '';
+    }
+
+    /*
+     * Product cards are only ~70-82px wide. A 360px Drive thumbnail is
+     * already sharp on high-density phones and downloads much faster than
+     * the old 1200px image on a fresh device.
+     */
+    if (
+      url.includes(
+        'drive.google.com/thumbnail'
+      )
+    ) {
+
+      if (
+        /[?&]sz=w\d+/i.test(
+          url
+        )
+      ) {
+
+        return url.replace(
+          /([?&]sz=)w\d+/i,
+          '$1w360'
+        );
+      }
+
+      return (
+        url +
+        (
+          url.includes('?')
+            ? '&'
+            : '?'
+        ) +
+        'sz=w360'
+      );
+    }
+
+    return url;
+  }
+
+
   function productImageHtml(
     product
   ) {
 
     const imageUrl =
-      String(
-        product.imageUrl ||
-        ''
-      )
-        .trim();
+      optimizedProductImageUrl(
+        product.imageUrl
+      );
 
     if (
       imageUrl
     ) {
 
       return (
-        '<img class="product-image" loading="lazy" decoding="async" src="' +
+        '<img class="product-image" loading="lazy" decoding="async" fetchpriority="low" src="' +
         escapeAttr(
           imageUrl
         ) +
@@ -3650,7 +2508,8 @@
         escapeAttr(
           product.name
         ) +
-        '" onerror="this.onerror=null;this.src=\'logo.png\';">'
+        '" onload="this.classList.add(\'loaded\')" ' +
+        'onerror="this.onerror=null;this.src=\'logo.png\';this.classList.add(\'loaded\');">'
       );
     }
 
@@ -4254,12 +3113,12 @@
         data.orderToken;
 
       localStorage.setItem(
-        CURRENT_ORDER_NO_KEY,
+        '2k_current_order_no',
         currentOrderNo
       );
 
       localStorage.setItem(
-        CURRENT_ORDER_TOKEN_KEY,
+        '2k_current_order_token',
         currentOrderToken
       );
 
@@ -4311,17 +3170,10 @@
     ).textContent =
       branchInfo
         ? (
-            (
-              branchInfo.branchName ||
-              branchInfo.branchCode ||
-              branchCode
-            ) +
+            branchInfo.branchName +
             ' • ORDER STATUS'
           )
-        : (
-            branchCode +
-            ' • ORDER STATUS'
-          );
+        : 'ORDER STATUS';
 
     document.getElementById(
       'statusOrderNo'
@@ -4434,17 +3286,13 @@
       orderStatus ===
         'READY'
         ? 'READY FOR SERVING'
-        : orderStatus ===
-            'PARTIALLY SERVED'
-          ? 'PARTIALLY SERVED • TO FOLLOW'
-          : orderStatus;
+        : orderStatus;
 
     const waitingStatuses =
       [
         'PENDING',
         'PREPARING',
-        'READY',
-        'PARTIALLY SERVED'
+        'READY'
       ];
 
     mainStatus.innerHTML =
@@ -4458,15 +3306,6 @@
       escapeHtml(
         displayStatus
       );
-
-    if (
-      orderStatus ===
-        'PARTIALLY SERVED'
-    ) {
-
-      mainStatus.style.background =
-        '#b45309';
-    }
 
     document.getElementById(
       'statusPayment'
@@ -4483,6 +3322,16 @@
           : ''
       );
 
+    const sequence =
+      [
+        'PENDING',
+        'PAID',
+        'PREPARING',
+        'READY',
+        'SERVED',
+        'COMPLETED'
+      ];
+
     let currentIndex =
       0;
 
@@ -4493,9 +3342,7 @@
       currentIndex = 5;
     } else if (
       orderStatus ===
-        'SERVED' ||
-      orderStatus ===
-        'PARTIALLY SERVED'
+        'SERVED'
     ) {
       currentIndex = 4;
     } else if (
@@ -4547,10 +3394,7 @@
       'stepServed',
       4,
       currentIndex,
-      orderStatus ===
-        'PARTIALLY SERVED'
-        ? 'Partially Served • Items To Follow'
-        : 'Served'
+      'Served'
     );
 
     setProgressStep(
@@ -4568,30 +3412,23 @@
             'READY'
           ? 'Your order is ready for serving. Our staff will bring it to your table.'
           : orderStatus ===
-              'PARTIALLY SERVED'
-            ? 'Part of your order has been served. The remaining item(s) will follow shortly.'
+              'SERVED'
+            ? 'Your order has been served. Enjoy your meal!'
             : orderStatus ===
-                'SERVED'
-              ? 'Your order has been served. Finalizing your order now.'
-              : orderStatus ===
-                  'COMPLETED'
-                ? 'Order completed. Thank you for ordering!'
-                : paymentStatus ===
-                    'PAID'
-                  ? 'Payment confirmed. Your order will be prepared shortly.'
-                  : order.paymentMethod ===
-                      'PAY AT CASHIER'
-                    ? 'Please pay at the cashier so the kitchen can start preparing your order.'
-                    : 'Your payment is waiting for staff verification.';
+                'COMPLETED'
+              ? 'Order completed. Thank you for ordering!'
+              : paymentStatus ===
+                  'PAID'
+                ? 'Payment confirmed. Your order will be prepared shortly.'
+                : order.paymentMethod ===
+                    'PAY AT CASHIER'
+                  ? 'Please pay at the cashier so the kitchen can start preparing your order.'
+                  : 'Your payment is waiting for staff verification.';
 
     document.getElementById(
       'statusMessage'
     ).textContent =
       message;
-
-    renderStatusItems(
-      order
-    );
 
     if (
       orderStatus ===
@@ -4624,162 +3461,6 @@
       newOrderButton.style.display =
         'block';
     }
-  }
-
-
-  function renderStatusItems(
-    order
-  ) {
-
-    const wrap =
-      document.getElementById(
-        'statusItemsProgress'
-      );
-
-    if (
-      !wrap
-    ) {
-      return;
-    }
-
-    const status =
-      String(
-        order.orderStatus ||
-        ''
-      )
-        .toUpperCase();
-
-    const showStatuses =
-      [
-        'PREPARING',
-        'READY',
-        'PARTIALLY SERVED',
-        'SERVED',
-        'COMPLETED'
-      ];
-
-    const items =
-      Array.isArray(
-        order.items
-      )
-        ? order.items
-        : [];
-
-    if (
-      !showStatuses.includes(
-        status
-      ) ||
-      items.length ===
-        0
-    ) {
-
-      wrap.innerHTML =
-        '';
-
-      return;
-    }
-
-    wrap.innerHTML =
-      items
-        .map(
-          function(item) {
-
-            const quantity =
-              Math.max(
-                0,
-                Number(
-                  item.quantity ||
-                  0
-                )
-              );
-
-            const servedQty =
-              Math.max(
-                0,
-                Math.min(
-                  quantity,
-                  Number(
-                    item.servedQty ||
-                    0
-                  )
-                )
-              );
-
-            const toFollowQty =
-              Math.max(
-                0,
-                quantity -
-                  servedQty
-              );
-
-            const stateClass =
-              toFollowQty ===
-                0
-                ? 'served'
-                : servedQty >
-                    0
-                  ? 'partial'
-                  : '';
-
-            const stateText =
-              toFollowQty ===
-                0
-                ? '✓ FULLY SERVED'
-                : (
-                    servedQty >
-                      0
-                      ? 'TO FOLLOW ' +
-                        toFollowQty
-                      : (
-                          status ===
-                            'PREPARING'
-                            ? 'PREPARING'
-                            : 'TO FOLLOW ' +
-                              toFollowQty
-                        )
-                  );
-
-            return (
-              '<div class="status-item-progress ' +
-              stateClass +
-              '">' +
-                '<div class="status-item-head">' +
-                  '<div class="status-item-name">' +
-                    escapeHtml(
-                      quantity +
-                      'x ' +
-                      (
-                        item.productName ||
-                        'Item'
-                      )
-                    ) +
-                  '</div>' +
-                  '<div class="status-item-count">' +
-                    'Served ' +
-                    servedQty +
-                    '/' +
-                    quantity +
-                  '</div>' +
-                '</div>' +
-                '<div class="status-item-follow ' +
-                  (
-                    toFollowQty ===
-                      0
-                      ? 'served'
-                      : ''
-                  ) +
-                '">' +
-                  escapeHtml(
-                    stateText
-                  ) +
-                '</div>' +
-              '</div>'
-            );
-          }
-        )
-        .join(
-          ''
-        );
   }
 
 
@@ -4854,26 +3535,12 @@
   function startNewOrder() {
 
     localStorage.removeItem(
-      CURRENT_ORDER_NO_KEY
+      '2k_current_order_no'
     );
 
     localStorage.removeItem(
-      CURRENT_ORDER_TOKEN_KEY
+      '2k_current_order_token'
     );
-
-    if (
-      branchCode ===
-        'CAM'
-    ) {
-
-      localStorage.removeItem(
-        '2k_current_order_no'
-      );
-
-      localStorage.removeItem(
-        '2k_current_order_token'
-      );
-    }
 
     currentOrderNo =
       '';
