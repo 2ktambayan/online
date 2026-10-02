@@ -1575,8 +1575,10 @@
           <label>Customer Name / Nickname *</label>
           <input id="customerName" maxlength="60" placeholder="Example: Juan">
 
-          <label>Table Number *</label>
-          <input id="tableNo" maxlength="20" placeholder="Example: 05">
+          <label>Table / Location *</label>
+          <select id="tableNo">
+            <option value="">Select table / location</option>
+          </select>
 
           <label>Contact Number</label>
           <input id="contactNumber" maxlength="30" inputmode="tel" placeholder="Optional">
@@ -1751,14 +1753,16 @@
 
 
   /*
-   * QR TABLE / AREA PRESET
+   * TABLE / LOCATION DROPDOWN
    *
-   * Examples:
-   * ?branch=CAM&table=Kubo%201%20-%20Table%201
-   * ?branch=CAM&table=Lumpiga%203%20-%20Table%205
+   * CAM:
+   * Kubo 1, Kubo 2, Lumpiga 1, Lumpiga 2, Lumpiga 3,
+   * Table 1 through Table 15.
    *
-   * The value is written into the existing tableNo field only.
-   * Existing manual table entry remains fully supported.
+   * CAB:
+   * Table 1 through Table 15.
+   *
+   * QR scan can auto-select the matching value using ?table=...
    */
   function tablePresetFromUrl() {
 
@@ -1779,21 +1783,51 @@
       .trim()
       .slice(
         0,
-        20
+        30
       );
   }
 
 
-  function applyTablePresetFromUrl() {
+  function tableOptionsForBranch() {
 
-    const preset =
-      tablePresetFromUrl();
+    const options =
+      [];
 
     if (
-      !preset
+      String(
+        branchCode
+      )
+        .trim()
+        .toUpperCase() ===
+      'CAM'
     ) {
-      return;
+
+      options.push(
+        'Kubo 1',
+        'Kubo 2',
+        'Lumpiga 1',
+        'Lumpiga 2',
+        'Lumpiga 3'
+      );
     }
+
+    for (
+      let tableNumber = 1;
+      tableNumber <= 15;
+      tableNumber++
+    ) {
+
+      options.push(
+        'Table ' +
+        tableNumber
+      );
+    }
+
+    return options;
+  }
+
+
+  function configureTableDropdown() {
 
     const field =
       document.getElementById(
@@ -1801,11 +1835,70 @@
       );
 
     if (
-      field
+      !field
     ) {
-      field.value =
-        preset;
+      return;
     }
+
+    const previousValue =
+      String(
+        field.value ||
+        ''
+      )
+        .trim();
+
+    field.innerHTML =
+      '<option value="">Select table / location</option>';
+
+    tableOptionsForBranch()
+      .forEach(
+        function(label) {
+
+          const option =
+            document.createElement(
+              'option'
+            );
+
+          option.value =
+            label;
+
+          option.textContent =
+            label;
+
+          field.appendChild(
+            option
+          );
+        }
+      );
+
+    const desiredValue =
+      tablePresetFromUrl() ||
+      previousValue;
+
+    if (
+      desiredValue &&
+      Array.from(
+        field.options
+      )
+        .some(
+          function(option) {
+            return (
+              option.value ===
+              desiredValue
+            );
+          }
+        )
+    ) {
+
+      field.value =
+        desiredValue;
+    }
+  }
+
+
+  function applyTablePresetFromUrl() {
+
+    configureTableDropdown();
   }
 
 
@@ -2053,6 +2146,8 @@
 
     branchCode =
       selected;
+
+    configureTableDropdown();
 
     rememberSelectedBranch();
 
