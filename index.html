@@ -1415,10 +1415,137 @@
       .branch-select-card{padding:20px 15px;}
     }
 
-  </style>
+  
+  /* QR ENTRY: DOWNLOAD APP OR CONTINUE IN BROWSER */
+  .qr-entry-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,10,138,.10), transparent 28%),
+      radial-gradient(circle at 85% 80%, rgba(255,10,138,.08), transparent 28%),
+      #f7f7f9;
+  }
+
+  .qr-entry-card {
+    width: min(100%, 430px);
+    padding: 28px 24px;
+    border: 1px solid #ececec;
+    border-radius: 22px;
+    background: #fff;
+    text-align: center;
+    box-shadow: 0 16px 40px rgba(0,0,0,.14);
+  }
+
+  .qr-entry-logo {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    object-fit: contain;
+    background: #111;
+  }
+
+  .qr-entry-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 900;
+  }
+
+  .qr-entry-place {
+    margin: 7px 0 18px;
+    color: #555;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+
+  .qr-entry-status {
+    margin: 8px 0 14px;
+    color: #666;
+    font-size: 12px;
+  }
+
+  .qr-entry-btn {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px 16px;
+    border: 0;
+    border-radius: 13px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .qr-entry-download {
+    background: #ff0a8a;
+    color: #fff;
+  }
+
+  .qr-entry-browser {
+    background: #111;
+    color: #fff;
+  }
+
+  .qr-entry-note {
+    margin-top: 15px;
+    color: #777;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+</style>
 </head>
 
 <body>
+
+  <div id="qrEntryOverlay" class="qr-entry-overlay">
+    <div class="qr-entry-card">
+      <img
+        src="../logo.png"
+        alt="2K Tambayan"
+        class="qr-entry-logo"
+        onerror="this.style.display='none'"
+      >
+
+      <h1 class="qr-entry-title">2K Tambayan Online Order</h1>
+
+      <div id="qrEntryPlace" class="qr-entry-place">
+        Scan detected
+      </div>
+
+      <div id="qrEntryStatus" class="qr-entry-status">
+        Choose how you want to order.
+      </div>
+
+      <a
+        id="qrDownloadAppBtn"
+        class="qr-entry-btn qr-entry-download"
+        href="https://github.com/2ktambayan/online/releases/download/v1.0.0/app-release.apk"
+      >
+        DOWNLOAD ANDROID APP
+      </a>
+
+      <button
+        id="qrContinueBrowserBtn"
+        class="qr-entry-btn qr-entry-browser"
+        type="button"
+      >
+        CONTINUE IN BROWSER
+      </button>
+
+      <div class="qr-entry-note">
+        Browser ordering does not require installation.
+      </div>
+    </div>
+  </div>
+
 
 <div class="app">
 
@@ -2024,11 +2151,252 @@
   }
 
 
+
+  const QR_ENTRY_SESSION_PREFIX =
+    '2k_qr_entry_seen_';
+
+
+  function isQrEntryRequest() {
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    return Boolean(
+      params.get(
+        'table'
+      ) ||
+      params.get(
+        'seat'
+      )
+    );
+  }
+
+
+  function qrEntrySessionKey() {
+
+    return (
+      QR_ENTRY_SESSION_PREFIX +
+      encodeURIComponent(
+        window.location.pathname +
+        window.location.search
+      )
+    );
+  }
+
+
+  function shouldShowQrEntryChoice() {
+
+    if (
+      !isQrEntryRequest()
+    ) {
+      return false;
+    }
+
+    try {
+
+      return (
+        sessionStorage.getItem(
+          qrEntrySessionKey()
+        ) !==
+        '1'
+      );
+
+    } catch (_) {
+
+      return true;
+    }
+  }
+
+
+  function markQrEntryChoiceSeen() {
+
+    try {
+
+      sessionStorage.setItem(
+        qrEntrySessionKey(),
+        '1'
+      );
+
+    } catch (_) {
+      /* Session storage is optional. */
+    }
+  }
+
+
+  function showQrEntryChoice() {
+
+    const overlay =
+      document.getElementById(
+        'qrEntryOverlay'
+      );
+
+    if (
+      !overlay
+    ) {
+      return;
+    }
+
+    const place =
+      tablePresetFromUrl();
+
+    const placeLabel =
+      document.getElementById(
+        'qrEntryPlace'
+      );
+
+    if (
+      placeLabel
+    ) {
+
+      placeLabel.textContent =
+        place
+          ? (
+              'CAM • ' +
+              place
+            )
+          : '2K Tambayan';
+    }
+
+    overlay.style.display =
+      'flex';
+
+    const browserButton =
+      document.getElementById(
+        'qrContinueBrowserBtn'
+      );
+
+    if (
+      browserButton
+    ) {
+
+      browserButton.onclick =
+        function() {
+
+          markQrEntryChoiceSeen();
+
+          overlay.style.display =
+            'none';
+        };
+    }
+
+    refreshQrDownloadLink();
+  }
+
+
+  async function refreshQrDownloadLink() {
+
+    const button =
+      document.getElementById(
+        'qrDownloadAppBtn'
+      );
+
+    const status =
+      document.getElementById(
+        'qrEntryStatus'
+      );
+
+    if (
+      !button
+    ) {
+      return;
+    }
+
+    const fallback =
+      'https://github.com/2ktambayan/online/releases/download/v1.0.0/app-release.apk';
+
+    button.href =
+      fallback;
+
+    try {
+
+      const response =
+        await fetch(
+          'https://api.github.com/repos/2ktambayan/online/releases/latest',
+          {
+            headers: {
+              'Accept':
+                'application/vnd.github+json'
+            }
+          }
+        );
+
+      if (
+        !response.ok
+      ) {
+        throw new Error(
+          'Latest release unavailable'
+        );
+      }
+
+      const release =
+        await response.json();
+
+      const assets =
+        Array.isArray(
+          release.assets
+        )
+          ? release.assets
+          : [];
+
+      const apk =
+        assets.find(
+          function(asset) {
+
+            return (
+              typeof asset.name ===
+                'string' &&
+              asset.name
+                .toLowerCase()
+                .endsWith(
+                  '.apk'
+                )
+            );
+          }
+        );
+
+      if (
+        apk &&
+        apk.browser_download_url
+      ) {
+
+        button.href =
+          apk.browser_download_url;
+
+        if (
+          status
+        ) {
+
+          status.textContent =
+            'Latest Android app is ready.';
+        }
+      }
+
+    } catch (_) {
+
+      if (
+        status
+      ) {
+
+        status.textContent =
+          'You can download the app or continue in your browser.';
+      }
+    }
+  }
+
+
   document.addEventListener(
     'DOMContentLoaded',
     function() {
 
       applyTablePresetFromUrl();
+
+      if (
+        shouldShowQrEntryChoice()
+      ) {
+        showQrEntryChoice();
+      }
 
       if (
         !branchCode
