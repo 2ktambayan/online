@@ -1750,6 +1750,65 @@
   }
 
 
+  /*
+   * QR TABLE / AREA PRESET
+   *
+   * Examples:
+   * ?branch=CAM&table=Kubo%201%20-%20Table%201
+   * ?branch=CAM&table=Lumpiga%203%20-%20Table%205
+   *
+   * The value is written into the existing tableNo field only.
+   * Existing manual table entry remains fully supported.
+   */
+  function tablePresetFromUrl() {
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    return String(
+      params.get(
+        'table'
+      ) ||
+      params.get(
+        'seat'
+      ) ||
+      ''
+    )
+      .trim()
+      .slice(
+        0,
+        20
+      );
+  }
+
+
+  function applyTablePresetFromUrl() {
+
+    const preset =
+      tablePresetFromUrl();
+
+    if (
+      !preset
+    ) {
+      return;
+    }
+
+    const field =
+      document.getElementById(
+        'tableNo'
+      );
+
+    if (
+      field
+    ) {
+      field.value =
+        preset;
+    }
+  }
+
+
   function savedAppBranchCode() {
 
     try {
@@ -1875,6 +1934,8 @@
   document.addEventListener(
     'DOMContentLoaded',
     function() {
+
+      applyTablePresetFromUrl();
 
       if (
         !branchCode
@@ -3802,6 +3863,18 @@
         'Status refresh failed',
         error
       );
+
+      const statusMessage =
+        document.getElementById(
+          'statusMessage'
+        );
+
+      if (
+        statusMessage
+      ) {
+        statusMessage.textContent =
+          'Unable to refresh order status. Retrying automatically...';
+      }
     }
   }
 
@@ -4011,7 +4084,7 @@
     const storageKey =
       '2k_status_rank_' +
       String(
-        currentBranchCode ||
+        branchCode ||
         ''
       ) +
       '_' +
