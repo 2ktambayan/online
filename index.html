@@ -1500,6 +1500,58 @@
     line-height: 1.45;
   }
 
+
+    .payment-qr-panel{
+      display:none;
+      margin-top:14px;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      text-align:center;
+    }
+
+    .payment-qr-panel.show{
+      display:block;
+    }
+
+    .payment-qr-title{
+      font-size:14px;
+      font-weight:900;
+      color:#111;
+      margin-bottom:5px;
+    }
+
+    .payment-qr-subtitle{
+      font-size:11px;
+      line-height:1.45;
+      color:#666;
+      margin-bottom:12px;
+    }
+
+    .payment-qr-image{
+      display:block;
+      width:min(100%,320px);
+      height:auto;
+      margin:0 auto 10px;
+      border-radius:12px;
+      background:#fff;
+    }
+
+    .payment-qr-amount{
+      margin-top:8px;
+      font-size:18px;
+      font-weight:900;
+      color:#111;
+    }
+
+    .payment-qr-warning{
+      margin-top:8px;
+      font-size:10px;
+      line-height:1.45;
+      color:#777;
+    }
+
 </style>
 </head>
 
@@ -1728,6 +1780,30 @@
             <button class="payment-option" data-payment="PAYMAYA" onclick="selectPayment('PAYMAYA')">
               PAYMAYA
             </button>
+          </div>
+
+          <div id="paymentQrPanel" class="payment-qr-panel">
+            <div class="payment-qr-title">
+              InstaPay QR / Bank &amp; E-Wallet Transfer
+            </div>
+
+            <div class="payment-qr-subtitle">
+              Scan using GCash, Maya, or another participating bank/e-wallet.
+            </div>
+
+            <img
+              class="payment-qr-image"
+              src="payment_qr.png"
+              alt="InstaPay payment QR"
+            >
+
+            <div id="paymentQrAmount" class="payment-qr-amount">
+              Amount to pay: ₱0.00
+            </div>
+
+            <div class="payment-qr-warning">
+              Transfer fees may apply. After payment, enter the transaction/reference number below.
+            </div>
           </div>
 
           <div id="walletReferenceWrap" style="display:none">
@@ -4032,11 +4108,41 @@
         ? 'block'
         : 'none';
 
+    const paymentQrPanel =
+      document.getElementById(
+        'paymentQrPanel'
+      );
+
+    if (
+      paymentQrPanel
+    ) {
+      paymentQrPanel.classList.toggle(
+        'show',
+        wallet
+      );
+    }
+
+    const paymentQrAmount =
+      document.getElementById(
+        'paymentQrAmount'
+      );
+
+    if (
+      paymentQrAmount
+    ) {
+      paymentQrAmount.textContent =
+        'Amount to pay: ' +
+        money(
+          cartTotal()
+        );
+    }
+
     document.getElementById(
       'walletReferenceLabel'
     ).textContent =
-      method +
-      ' Reference No. *';
+      wallet
+        ? 'Transaction / Reference No. *'
+        : 'Reference No. *';
 
     document.getElementById(
       'paymentNote'
@@ -4044,7 +4150,7 @@
       method ===
         'PAY AT CASHIER'
         ? 'Pay at the cashier after submitting your order. Kitchen printing starts only after payment is marked PAID.'
-        : 'Submit your e-wallet reference number. Staff must verify the payment before the kitchen ticket prints.';
+        : 'Use the InstaPay QR above, then enter the transaction/reference number. Staff must verify the payment before the kitchen ticket prints.';
   }
 
 
@@ -4120,11 +4226,7 @@
     ) {
 
       errorBox.innerHTML =
-        '<div class="error">Reference number is required for ' +
-        escapeHtml(
-          paymentMethod
-        ) +
-        '.</div>';
+        '<div class="error">Transaction / reference number is required for QR payment.</div>';
 
       return;
     }
