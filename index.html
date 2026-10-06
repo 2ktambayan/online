@@ -1774,17 +1774,15 @@
             <button class="payment-option selected" data-payment="PAY AT CASHIER" onclick="selectPayment('PAY AT CASHIER')">
               PAY AT CASHIER
             </button>
+
             <button class="payment-option" data-payment="GCASH" onclick="selectPayment('GCASH')">
-              GCASH
-            </button>
-            <button class="payment-option" data-payment="PAYMAYA" onclick="selectPayment('PAYMAYA')">
-              PAYMAYA
+              INSTAPAY QR / BANK &amp; E-WALLET TRANSFER
             </button>
           </div>
 
           <div id="paymentQrPanel" class="payment-qr-panel">
             <div class="payment-qr-title">
-              InstaPay QR / Bank &amp; E-Wallet Transfer
+              Scan to Pay
             </div>
 
             <div class="payment-qr-subtitle">
@@ -4073,6 +4071,35 @@
   }
 
 
+  function paymentMethodDisplayLabel(
+    method
+  ) {
+
+    const normalized =
+      String(
+        method ||
+        ''
+      )
+        .trim()
+        .toUpperCase();
+
+    if (
+      normalized ===
+        'GCASH' ||
+      normalized ===
+        'PAYMAYA'
+    ) {
+
+      return 'InstaPay QR / Bank & E-Wallet Transfer';
+    }
+
+    return (
+      method ||
+      'PAY AT CASHIER'
+    );
+  }
+
+
   function selectPayment(
     method
   ) {
@@ -4150,7 +4177,7 @@
       method ===
         'PAY AT CASHIER'
         ? 'Pay at the cashier after submitting your order. Kitchen printing starts only after payment is marked PAID.'
-        : 'Use the InstaPay QR above, then enter the transaction/reference number. Staff must verify the payment before the kitchen ticket prints.';
+        : 'Scan the InstaPay QR above using GCash, Maya, or another participating bank/e-wallet, then enter the transaction/reference number. Staff must verify the payment before the kitchen ticket prints.';
   }
 
 
@@ -4783,7 +4810,7 @@
       'statusPayment'
     ).textContent =
       'Payment: ' +
-      (
+      paymentMethodDisplayLabel(
         order.paymentMethod ||
         paymentMethod
       ) +
