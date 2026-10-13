@@ -210,14 +210,17 @@
     <img src="../logo.png" class="logo" alt="2K">
     <div class="brand">
       <h1>2K TAMBAYAN MONITOR</h1>
-      <p>Live Orders • Branch Sales</p>
+      <p>Cloudflare Online Orders • Branch Sales</p>
     </div>
     <button id="logoutButton" class="logoutBtn" type="button">LOGOUT</button>
     <div class="live"><span class="dot"></span><span id="liveText">LIVE</span></div>
   </header>
 
   <main class="wrap">
-    <button id="enableAlerts" class="alertButton">🔔 ENABLE ORDER SOUND & POPUP</button>
+    <button id="enableAlerts" class="alertButton">🔔 ENABLE ORDER SOUND</button>
+    <div style="font-size:10px;color:#888;margin:-6px 2px 12px">
+      New-order popup is always on. Tap the button once to enable alert sound.
+    </div>
     <div id="errorBox" class="error"></div>
 
     <div class="sectionTitle">
@@ -256,7 +259,7 @@
 
     <div class="sectionTitle">
       <h2>Orders Monitor</h2>
-      <span id="ordersSummary">Auto refresh: 5 sec</span>
+      <span id="ordersSummary">Auto refresh: 3 sec</span>
     </div>
 
     <div class="orderFilters">
@@ -296,76 +299,14 @@ let authToken = localStorage.getItem(AUTH_TOKEN_KEY) || '';
 let authExpiresAt = localStorage.getItem(AUTH_EXPIRES_KEY) || '';
 let authUser = localStorage.getItem(AUTH_USER_KEY) || '';
 
-const REFRESH_MS = 5000;
+const REFRESH_MS = 3000;
 
 let alertsEnabled = localStorage.getItem('2kMonitorAlerts') === '1';
-
-/*
- * V2 notification identity.
- *
- * Old monitor versions remembered only orderNo, e.g. POS-CAM-000001.
- * After a POS data reset/reseed, the same local sale number can be reused,
- * so a genuinely new direct POS sale could be treated as already seen.
- *
- * V2 includes source + order number + submitted timestamp, making the
- * identity stable during refresh but new after a reset/reseed.
- */
-const KNOWN_ORDERS_KEY = '2kMonitorKnownOrdersV2';
-let knownOrders = new Set(
-  JSON.parse(
-    localStorage.getItem(KNOWN_ORDERS_KEY) || '[]'
-  )
-);
-
+let knownOrders = new Set(JSON.parse(localStorage.getItem('2kKnownOrders') || '[]'));
 let firstSuccessfulLoad = true;
 let audioCtx = null;
 let latestOrders = [];
 let orderFilter = 'ACTIVE';
-
-function orderIdentity(order) {
-  if (!order || !order.orderNo) return '';
-
-  const source =
-    String(order.sourceType || 'ONLINE')
-      .trim()
-      .toUpperCase();
-
-  const orderNo =
-    String(order.orderNo || '')
-      .trim();
-
-  const submitted =
-    String(
-      order.dateSubmitted ||
-      order.epochMillis ||
-      order.createdAt ||
-      ''
-    ).trim();
-
-  return `${source}|${orderNo}|${submitted}`;
-}
-
-function isFreshOrder(order, maxAgeMs = 90000) {
-  const raw =
-    order?.dateSubmitted ||
-    order?.createdAt ||
-    '';
-
-  const timestamp =
-    new Date(raw).getTime();
-
-  if (!Number.isFinite(timestamp)) {
-    return false;
-  }
-
-  const age =
-    Math.abs(
-      Date.now() -
-      timestamp
-    );
-
-  return age <= maxAgeMs;
-}
 
 async function apiPost(payload) {
   const response = await fetch(
@@ -445,10 +386,10 @@ function formatTime(iso) {
 function setAlertButton() {
   const b = document.getElementById('enableAlerts');
   if (alertsEnabled) {
-    b.textContent = '🔔 ORDER ALERTS ENABLED';
+    b.textContent = '🔔 ORDER SOUND ENABLED • POPUP ALWAYS ON';
     b.classList.add('enabled');
   } else {
-    b.textContent = '🔔 ENABLE ORDER SOUND & POPUP';
+    b.textContent = '🔔 ENABLE ORDER SOUND • POPUP ALWAYS ON';
     b.classList.remove('enabled');
   }
 }
@@ -481,7 +422,8 @@ function beep() {
 }
 
 function showPopup(order) {
-  if (!alertsEnabled) return;
+  // Popup always works. Sound stays opt-in because browsers
+  // require a user gesture before audio can play.
   beep();
 
   const sourceType =
@@ -579,7 +521,7 @@ function renderOrders(orders) {
   const host = document.getElementById('orders');
 
   document.getElementById('ordersSummary').textContent =
-    `${visibleOrders.length} shown • Auto refresh: 5 sec`;
+    `${visibleOrders.length} shown • Auto refresh: 3 sec`;
 
   if (!visibleOrders.length) {
     const emptyText =
@@ -627,101 +569,42 @@ function renderOrders(orders) {
 
 function processNewOrders(orders) {
   const list = orders || [];
+  const unseen = list.filter(o => o.orderNo && !knownOrders.has(o.orderNo));
 
-  const unseen =
-    list.filter(order => {
-      const key =
-        orderIdentity(order);
-
-      return (
-        key &&
-        !knownOrders.has(key)
-      );
-    });
-
-  /*
-   * First successful load:
-   *
-   * Establish a baseline so old history does not explode into popups.
-   * But if the newest order is very recent, alert it even when it is a
-   * COMPLETED direct POS transaction. Direct POS orders are completed at
-   * checkout, so the old "active only" first-load rule could suppress them.
-   */
+  // On the very first successful load, establish a baseline.
+  // If there are active orders, alert only the newest one.
   if (firstSuccessfulLoad) {
-
-    list.forEach(order => {
-      const key =
-        orderIdentity(order);
-
-      if (key) {
-        knownOrders.add(key);
-      }
-    });
-
+    list.forEach(o => o.orderNo && knownOrders.add(o.orderNo));
     firstSuccessfulLoad = false;
     persistKnown();
 
-    const newestRecent =
-      list.find(order =>
-        isFreshOrder(
-          order
-        )
-      );
+    const newestActive = list.find(o => {
+      const s = String(o.orderStatus || '').toUpperCase();
+      return s !== 'COMPLETED' && s !== 'REJECTED';
+    });
 
-    if (
-      newestRecent &&
-      alertsEnabled
-    ) {
-      showPopup(
-        newestRecent
-      );
+    if (newestActive) {
+      const submitted = new Date(newestActive.dateSubmitted || 0).getTime();
+      const ageMs = Date.now() - submitted;
+
+      if (Number.isFinite(ageMs) && ageMs >= 0 && ageMs <= 45000) {
+        showPopup(newestActive);
+      }
     }
-
     return;
   }
 
   if (unseen.length) {
-
-    unseen.forEach(order => {
-      const key =
-        orderIdentity(order);
-
-      if (key) {
-        knownOrders.add(key);
-      }
-    });
-
+    unseen.forEach(o => knownOrders.add(o.orderNo));
     persistKnown();
-
-    /*
-     * The monitor API returns newest-first.
-     * Alert the newest unseen transaction.
-     */
-    showPopup(
-      unseen[0]
-    );
+    showPopup(unseen[unseen.length - 1] || unseen[0]);
   }
 }
 
 function persistKnown() {
-  const arr =
-    Array.from(
-      knownOrders
-    ).slice(
-      -300
-    );
-
-  knownOrders =
-    new Set(
-      arr
-    );
-
-  localStorage.setItem(
-    KNOWN_ORDERS_KEY,
-    JSON.stringify(
-      arr
-    )
-  );
+  const arr = Array.from(knownOrders).slice(-200);
+  knownOrders = new Set(arr);
+  localStorage.setItem('2kKnownOrders', JSON.stringify(arr));
 }
 
 async function refresh() {
@@ -753,8 +636,18 @@ async function refresh() {
       throw new Error(data.message || data.error || 'Monitor API failed');
     }
 
-    error.classList.remove('show');
-    document.getElementById('liveText').textContent = 'LIVE';
+    if (data.onlineOrdersError) {
+      error.textContent =
+        'Online Orders monitor: ' + data.onlineOrdersError;
+      error.classList.add('show');
+    } else {
+      error.classList.remove('show');
+    }
+
+    document.getElementById('liveText').textContent =
+      data.onlineOrdersBackend === 'CLOUDFLARE_D1'
+        ? 'LIVE • D1'
+        : 'LIVE';
 
     document.getElementById('combinedSales').textContent = peso(data.combined?.sales);
     document.getElementById('combinedExpenses').textContent = peso(data.combined?.expenses);
