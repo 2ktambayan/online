@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="description" content="2K Tambayan online ordering — choose your branch, browse the menu and send your order to the store.">
+  <title>2K Tambayan | Online Ordering V2 Staging</title>
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+  <link rel="preconnect" href="https://drive.google.com">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-wrap">
+        <img class="brand-logo" src="logo.png" alt="" onerror="this.hidden=true">
+        <div class="brand-copy">
+          <div class="brand">2K TAMBAYAN</div>
+          <div class="branch-subtitle">ONLINE ORDERING <span class="staging-chip">V2 STAGING</span></div>
+        </div>
+      </div>
+      <label class="branch-pick" for="branch">
+        <span>ORDERING BRANCH</span>
+        <select id="branch" aria-label="Ordering branch"><option value="CAM">CAM — Camambugan</option><option value="CAB">CAB — Cabatuan</option></select>
+      </label>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <div class="intro">
+      <h1>Order your favorites <span>♡</span></h1>
+      <p>Choose your food and drinks, review your order, then submit to the selected branch.</p>
+      <div class="guide" aria-label="Order steps">
+        <span><b>1</b> Choose items</span><i aria-hidden="true">›</i>
+        <span><b>2</b> Review order</span><i aria-hidden="true">›</i>
+        <span><b>3</b> Submit</span>
+      </div>
+    </div>
+
+    <div class="site-layout">
+      <main class="menu-column" id="mainContent">
+        <section class="menu-tools" aria-label="Menu filters">
+          <div class="section-heading"><div><div class="eyebrow">EXPLORE OUR MENU</div><h2>Menu <span id="menuCount" class="count-pill">—</span></h2></div><span id="branchTag" class="branch-tag">CAM</span></div>
+          <label class="visually-hidden" for="search">Search menu</label>
+          <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" autocomplete="off" placeholder="Search food or drinks..."></div>
+          <div class="category-wrap">
+            <label for="category">FILTER MENU</label>
+            <select id="category" aria-label="Filter products by category"><option value="ALL">All Categories</option></select>
+          </div>
+        </section>
+        <div id="pageNotice" class="page-notice" role="status" aria-live="polite">Loading menu…</div>
+        <section id="products" class="product-list" aria-label="Available products"></section>
+        <p class="page-footer">Prices and availability are confirmed by the V2 server at checkout. Please stay in the store while your order is prepared.</p>
+      </main>
+
+      <div id="cartBackdrop" class="cart-backdrop" hidden></div>
+      <aside id="orderPane" class="order-pane" aria-label="Your order" aria-modal="false">
+        <div class="order-card">
+          <div class="order-heading">
+            <div><div class="eyebrow">YOUR SELECTION</div><h2>🛒 Your Order <span id="sidebarQty" class="count-pill">0</span></h2></div>
+            <button type="button" id="closeCart" class="icon-btn" aria-label="Close your order">✕</button>
+          </div>
+          <div id="orderItems" class="cart-items" aria-live="polite"></div>
+          <div class="order-summary">
+            <div class="summary-row"><span>Items</span><strong id="itemQty">0</strong></div>
+            <div class="summary-row grand-total"><span>TOTAL</span><strong id="total">₱0.00</strong></div>
+          </div>
+          <button id="checkoutButton" type="button" class="btn btn-primary" disabled>CONTINUE TO CHECKOUT →</button>
+          <p class="under-button">Final prices are verified by the V2 backend.</p>
+        </div>
+
+        <div id="checkoutPanel" class="order-card checkout-panel" hidden>
+          <div class="order-heading"><div><div class="eyebrow">ALMOST THERE</div><h2>Checkout</h2></div><button id="backToCart" type="button" class="text-button">Back to cart</button></div>
+          <form id="checkoutForm" novalidate>
+            <label for="customerName">Customer name <span class="required">*</span></label><input id="customerName" maxlength="90" autocomplete="name" required placeholder="Your name">
+            <div class="field-pair"><div><label for="tableNo">Table no. (optional)</label><input id="tableNo" maxlength="40" placeholder="e.g. 3"></div><div><label for="contact">Contact (optional)</label><input id="contact" maxlength="40" type="tel" autocomplete="tel" placeholder="Mobile number"></div></div>
+            <label for="orderNotes">Order notes (optional)</label><textarea id="orderNotes" maxlength="320" rows="2" placeholder="Any special instructions?"></textarea>
+            <label for="payment">Payment method</label>
+            <select id="payment"><option value="PAY AT CASHIER">Pay at Cashier</option><option value="GCASH">GCash — confirmation by staff</option><option value="PAYMAYA">PayMaya — confirmation by staff</option></select>
+            <div class="checkout-confirm">Order for <strong id="checkoutBranch">CAM</strong> • Total <strong id="checkoutTotal">₱0.00</strong></div>
+            <button id="submitOrder" type="submit" class="btn btn-primary">SUBMIT ORDER</button>
+            <p class="under-button">No payment credentials are collected here. Payment is verified by the cashier.</p>
+          </form>
+        </div>
+
+        <div id="trackingPanel" class="order-card tracking-panel" hidden>
+          <div class="eyebrow">ORDER UPDATES</div><h2>Track your order</h2>
+          <p id="trackingMessage" class="tracking-message"></p>
+          <button id="refreshStatus" type="button" class="btn btn-outline">REFRESH ORDER STATUS</button>
+        </div>
+        <p id="orderError" class="error-message" role="alert" aria-live="assertive" hidden></p>
+      </aside>
+    </div>
+  </div>
+
+  <div class="mobile-cart-bar" id="mobileCartBar">
+    <button id="mobileCartButton" type="button" aria-label="View your order" aria-controls="orderPane" aria-expanded="false">
+      <span class="mobile-cart-icon" aria-hidden="true">🛒</span>
+      <span class="mobile-cart-copy"><strong>VIEW YOUR ORDER</strong><small id="mobileQty">0 items</small></span>
+      <strong id="mobileTotal">₱0.00</strong><span class="mobile-chevron" aria-hidden="true">↑</span>
+    </button>
+  </div>
+  <script type="application/json" id="appMeta">{"version":"2K-V2-WEB-123.6","financialWrites":"not touched","v1":"not touched"}</script>
+</body>
+</html>
