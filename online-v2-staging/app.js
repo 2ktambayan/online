@@ -302,7 +302,16 @@
   $('mobileCartButton').onclick=openCart; $('closeCart').onclick=closeCart; $('cartBackdrop').onclick=closeCart;
   document.addEventListener('keydown',e=>{if(e.key==='Escape' && $('orderPane').classList.contains('mobile-open'))closeCart();});
   window.addEventListener('resize',()=>{if(!isMobile())closeCart();});
-  $('fulfillmentType').onchange=()=>{ const isPickup=$('fulfillmentType').value==='PICKUP'; $('tableNo').disabled=isPickup; if(isPickup)$('tableNo').value=''; };
+  const updateFulfillmentLabels=()=>{
+    const isPickup=$('fulfillmentType').value==='PICKUP';
+    $('tableNo').disabled=isPickup;
+    $('tableNo').closest('div').hidden=isPickup;
+    if(isPickup)$('tableNo').value='';
+    const cashierOption=$('payment').querySelector('option[value="PAY AT CASHIER"]');
+    if(cashierOption)cashierOption.textContent=isPickup?'Pay at Pickup':'Pay at Cashier';
+  };
+  $('fulfillmentType').onchange=updateFulfillmentLabels;
+  updateFulfillmentLabels();
   $('checkoutButton').onclick=checkout;
   $('backToCart').onclick=()=>{ $('checkoutPanel').hidden=true; error(''); };
   $('checkoutForm').onsubmit=submitOrder;
