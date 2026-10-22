@@ -30,7 +30,6 @@
     </div>
   </header>
 
-  <div id="onlineStatusBanner" class="online-status-banner" role="status">Checking online ordering availability…</div>
   <div class="app-shell">
     <div class="intro">
       <h1>Order your favorites <span>♡</span></h1>
@@ -78,7 +77,9 @@
           <div class="order-heading"><div><div class="eyebrow">ALMOST THERE</div><h2>Checkout</h2></div><button id="backToCart" type="button" class="text-button">Back to cart</button></div>
           <form id="checkoutForm" novalidate>
             <label for="customerName">Customer name <span class="required">*</span></label><input id="customerName" maxlength="90" autocomplete="name" required placeholder="Your name">
-            <div class="field-pair"><div><label for="tableNo">Table no. (optional)</label><input id="tableNo" maxlength="40" placeholder="e.g. 3"></div><div><label for="contact">Contact (optional)</label><input id="contact" maxlength="40" type="tel" autocomplete="tel" placeholder="Mobile number"></div></div>
+            <label for="fulfillmentType">Order type</label>
+            <select id="fulfillmentType"><option value="DINE_IN">Dine-in / Table</option><option value="PICKUP">Pickup / Takeout</option></select>
+            <div class="field-pair"><div><label for="tableNo">Table no. (for dine-in)</label><input id="tableNo" maxlength="40" placeholder="e.g. 3"></div><div><label for="contact">Contact (optional)</label><input id="contact" maxlength="40" type="tel" autocomplete="tel" placeholder="Mobile number"></div></div>
             <label for="orderNotes">Order notes (optional)</label><textarea id="orderNotes" maxlength="320" rows="2" placeholder="Any special instructions?"></textarea>
             <label for="payment">Payment method</label>
             <select id="payment"><option value="PAY AT CASHIER">Pay at Cashier</option><option value="GCASH">GCash — confirmation by staff</option><option value="PAYMAYA">PayMaya — confirmation by staff</option></select>

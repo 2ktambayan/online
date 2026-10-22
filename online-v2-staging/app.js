@@ -245,7 +245,7 @@
     if (!validEndpoint) { error('V2 API endpoint is not configured in config.js.'); return; }
     if (!pendingRequestId) { try { pendingRequestId=newRequestId(); } catch(e){ error(e.message);return; } }
     const data={action:'v2OnlineSubmit',branchCode:currentBranch,requestId:pendingRequestId,
-      customerName:name,tableNo:$('tableNo').value.trim(),contactNumber:$('contact').value.trim(),
+      customerName:name,fulfillmentType:$('fulfillmentType').value,tableNo:$('fulfillmentType').value==='PICKUP'?'PICKUP':$('tableNo').value.trim(),contactNumber:$('contact').value.trim(),
       orderNotes:$('orderNotes').value.trim(),paymentMethod:$('payment').value,
       items:[...cart.values()].map(x=>({menuProductId:x.product.menuProductId,quantity:x.qty}))};
     try { const latest=await callV2({action:'v2OnlineBranchStatus',branchCode:currentBranch});
@@ -302,6 +302,7 @@
   $('mobileCartButton').onclick=openCart; $('closeCart').onclick=closeCart; $('cartBackdrop').onclick=closeCart;
   document.addEventListener('keydown',e=>{if(e.key==='Escape' && $('orderPane').classList.contains('mobile-open'))closeCart();});
   window.addEventListener('resize',()=>{if(!isMobile())closeCart();});
+  $('fulfillmentType').onchange=()=>{ const isPickup=$('fulfillmentType').value==='PICKUP'; $('tableNo').disabled=isPickup; if(isPickup)$('tableNo').value=''; };
   $('checkoutButton').onclick=checkout;
   $('backToCart').onclick=()=>{ $('checkoutPanel').hidden=true; error(''); };
   $('checkoutForm').onsubmit=submitOrder;
