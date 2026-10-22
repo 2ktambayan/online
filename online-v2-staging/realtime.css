@@ -20,3 +20,16 @@
 .order-status-changed { animation: orderUpdateFlash 1.15s ease-out 1; }
 @keyframes orderUpdateFlash { 0% {box-shadow:0 0 0 3px rgba(255,22,132,.42); }100%{box-shadow:0 0 0 0 rgba(255,22,132,0)} }
 @media (prefers-reduced-motion:reduce) { .brand-animated-emblem,.brand-logo:not([hidden]),.tracking-spinner,.order-status-changed {animation:none!important} }
+
+/* STEP 123.39 — branch OPEN/CLOSED status on the main ordering page. */
+.ordering-availability {
+  margin: 0 0 16px; padding: 18px 22px; border: 2px solid #ce3838;
+  border-radius: 16px; background: #fff0f0; color: #a51e1e;
+  font-weight: 900; font-size: clamp(16px,2vw,21px); text-align:center; line-height:1.4;
+}
+.ordering-availability[data-open="true"] {
+  border-color:#168343; background:#eefaf1; color:#126834;
+}
+.product-add:disabled, #checkoutButton:disabled, #submitOrder:disabled, .qty-btn:disabled {
+  opacity:.48; cursor:not-allowed; filter:grayscale(.6);
+}

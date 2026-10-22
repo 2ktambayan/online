@@ -26,6 +26,9 @@
   let statusInFlight = false;
   let latestTrackingSignature = '';
   let statusTimer = null;
+  const BRANCH_STATUS_INTERVAL_MS = 10000;
+  let branchStatusInFlight = false;
+  let branchStatusTimer = null;
   const isMobile = () => window.matchMedia('(max-width:760px)').matches;
   const price = n => '₱' + Number(n).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   const safeStore = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {} };
@@ -125,12 +128,14 @@
       card.append(content);
       const add = el('button', 'product-add', '+ ADD');
       add.type = 'button'; add.setAttribute('aria-label', 'Add ' + p.name + ' to your order');
+      add.disabled = !statusKnown || !acceptingOrders || submitting || submissionUncertain;
       add.onclick = () => addItem(p);
       card.append(add); list.append(card);
     }
   }
 
   function addItem(product) {
+    if (!statusKnown || !acceptingOrders) { error('ONLINE ORDERING CLOSED — This branch is not accepting orders.'); return; }
     if (submitting || submissionUncertain) { error('Please resolve the pending checkout before changing the order.'); return; }
     const entry = cart.get(product.menuProductId) || {product,qty:0};
     if (entry.qty >= MAX_QTY_PER_ITEM) { error('Maximum ' + MAX_QTY_PER_ITEM + ' per item.'); return; }
@@ -138,7 +143,7 @@
   }
 
   function changeQty(id, change) {
-    if (submitting || submissionUncertain) return;
+    if (submitting || submissionUncertain || !statusKnown || !acceptingOrders) return;
     const entry = cart.get(id); if (!entry) return;
     const qty = entry.qty + change;
     if (qty < 1) cart.delete(id); else entry.qty = Math.min(MAX_QTY_PER_ITEM, qty);
@@ -157,7 +162,7 @@
       const sub = el('div','cart-subline'); sub.append(el('span','cart-unit',price(entry.product.sellingPrice)+' each'));
       const qtyControls=el('div','qty-controls');
       const minus=el('button','qty-btn','−'); minus.type='button'; minus.setAttribute('aria-label','Remove one '+entry.product.name); minus.onclick=()=>changeQty(id,-1);
-      const plus=el('button','qty-btn','+'); plus.type='button'; plus.setAttribute('aria-label','Add one '+entry.product.name); plus.onclick=()=>changeQty(id,1);
+      const plus=el('button','qty-btn','+'); plus.type='button'; plus.disabled=!statusKnown || !acceptingOrders; plus.setAttribute('aria-label','Add one '+entry.product.name); plus.onclick=()=>changeQty(id,1);
       qtyControls.append(minus,el('span','qty-num',entry.qty),plus); sub.append(qtyControls); row.append(sub); area.append(row);
     }
     const qty = totalQty(), amount = price(totalPrice());
@@ -167,7 +172,10 @@
     $('checkoutBranch').textContent=currentBranch;
     // Allow customers to REVIEW the checkout fields even while branch submissions are closed.
     // Actual submitOrder() still checks the server-side ordering status; server write flags remain authoritative.
-    $('checkoutButton').disabled=qty===0 || submitting || submissionUncertain;
+    $('checkoutButton').disabled=qty===0 || !statusKnown || !acceptingOrders || submitting || submissionUncertain;
+    $('checkoutButton').textContent=(statusKnown && acceptingOrders) ? 'CONTINUE TO CHECKOUT →' : 'ONLINE ORDERING CLOSED';
+    $('submitOrder').disabled=!statusKnown || !acceptingOrders || submitting || submissionUncertain;
+    if (!submitting) $('submitOrder').textContent=(statusKnown && acceptingOrders) ? 'SUBMIT ORDER' : 'ONLINE ORDERING CLOSED';
   }
 
   function openCart() {
@@ -184,12 +192,42 @@
 
   function updateOrderStatusBanner() {
     const n=$('onlineStatusBanner'); if(!n)return;
-    n.textContent= !statusKnown ? 'Checking online ordering availability…' :
-      acceptingOrders ? 'ONLINE ORDERING OPEN — Accepting orders' :
-      ownerBranchOpen ? 'STAGING — Owner has opened this branch, but live submissions are still disabled.' :
-      'ONLINE ORDERING TEMPORARILY CLOSED — You may browse the menu.';
+    n.textContent= !statusKnown ? 'CHECKING ONLINE ORDERING AVAILABILITY…' :
+      acceptingOrders ? 'ONLINE ORDERING OPEN — '+currentBranch+' is accepting orders' :
+      ownerBranchOpen ? 'ONLINE ORDERING CLOSED — '+currentBranch+' is not accepting online orders at this time.' :
+      'ONLINE ORDERING CLOSED — '+currentBranch+' is not accepting orders. You may view the menu.';
     n.setAttribute('data-open',acceptingOrders?'true':'false');
   }
+  async function refreshBranchStatus() {
+    if (branchStatusInFlight || document.hidden) return;
+    const observedBranch = currentBranch;
+    const observedSeq = menuSeq;
+    branchStatusInFlight = true;
+    try {
+      const result = await callV2({action:'v2OnlineBranchStatus',branchCode:observedBranch});
+      if (currentBranch !== observedBranch || menuSeq !== observedSeq) return;
+      const previous = statusKnown && acceptingOrders;
+      ownerBranchOpen = result.acceptingOrders === true;
+      acceptingOrders = ownerBranchOpen && result.onlineOrderWritesEnabled === true;
+      statusKnown = true;
+      if (previous !== acceptingOrders) {
+        if (!acceptingOrders) $('checkoutPanel').hidden = true;
+        renderMenu();
+      }
+      updateOrderStatusBanner(); renderCart();
+    } catch (_) {
+      if (currentBranch !== observedBranch || menuSeq !== observedSeq) return;
+      // Do not allow checkout with an unverified backend state.
+      statusKnown = false; acceptingOrders = false; ownerBranchOpen = false;
+      $('checkoutPanel').hidden = true;
+      updateOrderStatusBanner(); renderMenu(); renderCart();
+    } finally { branchStatusInFlight = false; }
+  }
+  function startBranchStatusChecks() {
+    if (branchStatusTimer !== null) clearInterval(branchStatusTimer);
+    branchStatusTimer = setInterval(() => { if (!document.hidden) void refreshBranchStatus(); }, BRANCH_STATUS_INTERVAL_MS);
+  }
+
   async function loadMenu() {
     const seq=++menuSeq;
     products=[]; cart.clear(); pendingRequestId=''; submissionUncertain=false;
@@ -232,7 +270,7 @@
   }
 
   function checkout() {
-    if (!cart.size || submissionUncertain) return;
+    if (!cart.size || submissionUncertain || !statusKnown || !acceptingOrders) return;
     $('checkoutPanel').hidden=false;
     error((!statusKnown || !acceptingOrders)
       ? 'CHECKOUT PREVIEW ONLY: This branch is not accepting orders. You can review the form, but SUBMIT ORDER will be rejected until the branch and server order writes are enabled.'
@@ -326,7 +364,7 @@
     stopTracking();
     if (!orderTracking || orderTracking.branchCode !== currentBranch) return;
     statusTimer = setInterval(() => { if (!document.hidden) void refreshStatus(false); }, TRACK_INTERVAL_MS);
-    if (!document.hidden) void refreshStatus(false);
+    if (!document.hidden) { void refreshStatus(false); void refreshBranchStatus(); }
   }
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) void refreshStatus(false);
@@ -374,5 +412,5 @@
       startTracking();
     }
   }
-  renderCart(); loadMenu();
+  renderCart(); loadMenu(); startBranchStatusChecks();
 })();
