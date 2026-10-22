@@ -15,6 +15,9 @@
   let currentBranch = 'CAM';
   let menuSeq = 0;
   let pendingRequestId = '';
+  let acceptingOrders = false;
+  let ownerBranchOpen = false;
+  let statusKnown = false;
   let submitting = false;
   let orderTracking = null;
   let submissionUncertain = false;
@@ -157,7 +160,7 @@
     $('mobileQty').textContent = qty + (qty === 1 ? ' item' : ' items'); $('mobileTotal').textContent = amount;
     $('total').textContent=amount; $('checkoutTotal').textContent=amount;
     $('checkoutBranch').textContent=currentBranch;
-    $('checkoutButton').disabled=qty===0 || submitting || submissionUncertain;
+    $('checkoutButton').disabled=qty===0 || submitting || submissionUncertain || !acceptingOrders || !statusKnown;
   }
 
   function openCart() {
@@ -172,11 +175,20 @@
     document.body.style.overflow='';
   }
 
+  function updateOrderStatusBanner() {
+    const n=$('onlineStatusBanner'); if(!n)return;
+    n.textContent= !statusKnown ? 'Checking online ordering availability…' :
+      acceptingOrders ? 'ONLINE ORDERING OPEN — Accepting orders' :
+      ownerBranchOpen ? 'STAGING — Owner has opened this branch, but live submissions are still disabled.' :
+      'ONLINE ORDERING TEMPORARILY CLOSED — You may browse the menu.';
+    n.setAttribute('data-open',acceptingOrders?'true':'false');
+  }
   async function loadMenu() {
     const seq=++menuSeq;
     products=[]; cart.clear(); pendingRequestId=''; submissionUncertain=false;
     activeCategory='ALL'; $('search').value=''; $('checkoutPanel').hidden=true; $('category').value='ALL';
     $('branchTag').textContent=currentBranch; $('checkoutBranch').textContent=currentBranch;
+    acceptingOrders=false; ownerBranchOpen=false; statusKnown=false; updateOrderStatusBanner();
     renderCart(); renderMenu(); refreshCategoryPicker();
     notice('Loading ' + currentBranch + ' menu…'); error('');
     const requestBranch=currentBranch;
@@ -191,7 +203,12 @@
             !Number.isFinite(Number(p.sellingPrice)) || Number(p.sellingPrice)<0 || ids.has(p.menuProductId)) return false;
         ids.add(p.menuProductId); return true;
       });
-      refreshCategoryPicker(); renderMenu(); notice('');
+      const status=await callV2({action:'v2OnlineBranchStatus',branchCode:requestBranch});
+      if(seq!==menuSeq || currentBranch!==requestBranch)return;
+      ownerBranchOpen=status.acceptingOrders===true;
+      acceptingOrders=ownerBranchOpen && status.onlineOrderWritesEnabled===true;
+      statusKnown=true;updateOrderStatusBanner();
+      refreshCategoryPicker(); renderMenu(); renderCart(); notice('');
     } catch (e) {
       if(seq!==menuSeq) return;
       products=[]; refreshCategoryPicker(); renderMenu();
@@ -216,6 +233,7 @@
 
   async function submitOrder(event) {
     event.preventDefault(); if (submitting || submissionUncertain || cart.size===0) return;
+    if(!acceptingOrders || !statusKnown)return error('Online ordering is currently closed for this branch.');
     const name=$('customerName').value.trim();
     if (!name) { error('Please enter your customer name.'); $('customerName').focus(); return; }
     if (name.length>90) { error('Customer name is too long.'); return; }
@@ -225,6 +243,9 @@
       customerName:name,tableNo:$('tableNo').value.trim(),contactNumber:$('contact').value.trim(),
       orderNotes:$('orderNotes').value.trim(),paymentMethod:$('payment').value,
       items:[...cart.values()].map(x=>({menuProductId:x.product.menuProductId,quantity:x.qty}))};
+    try { const latest=await callV2({action:'v2OnlineBranchStatus',branchCode:currentBranch});
+      if(!latest.acceptingOrders || !latest.onlineOrderWritesEnabled)throw Error('Online ordering is currently closed.');
+    }catch(e){error(e.message);return;}
     submitting=true; $('submitOrder').disabled=true; $('submitOrder').textContent='SENDING ORDER…';
     error(''); renderCart();
     try {
