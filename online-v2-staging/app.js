@@ -191,12 +191,20 @@
   }
 
   function updateOrderStatusBanner() {
-    const n=$('onlineStatusBanner'); if(!n)return;
-    n.textContent= !statusKnown ? 'CHECKING ONLINE ORDERING AVAILABILITY…' :
-      acceptingOrders ? 'ONLINE ORDERING OPEN — '+currentBranch+' is accepting orders' :
-      ownerBranchOpen ? 'ONLINE ORDERING CLOSED — '+currentBranch+' is not accepting online orders at this time.' :
-      'ONLINE ORDERING CLOSED — '+currentBranch+' is not accepting orders. You may view the menu.';
-    n.setAttribute('data-open',acceptingOrders?'true':'false');
+    // Fail-closed until server confirms this exact branch is accepting orders.
+    const enabled = statusKnown && acceptingOrders;
+    const gate = $('closedGate');
+    const app = document.querySelector('.app-shell');
+    const mobile = $('mobileCartBar');
+    gate.hidden = enabled;
+    app.hidden = !enabled;
+    mobile.hidden = !enabled;
+    $('closedGateBranch').textContent = currentBranch === 'CAB' ? 'CAB — Cabatuan' : 'CAM — Camambugan';
+    $('closedGateTitle').textContent = statusKnown ? 'ONLINE ORDERING CLOSED' : 'CHECKING ONLINE ORDERING';
+    $('closedGateMessage').textContent = statusKnown
+      ? 'Online ordering is temporarily unavailable for this branch. Please check back later.'
+      : 'Checking branch availability…';
+    if (!enabled && $('orderPane').classList.contains('mobile-open')) closeCart();
   }
   async function refreshBranchStatus() {
     if (branchStatusInFlight || document.hidden) return;
@@ -367,7 +375,7 @@
     if (!document.hidden) { void refreshStatus(false); void refreshBranchStatus(); }
   }
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) void refreshStatus(false);
+    if (!document.hidden) { void refreshStatus(false); void refreshBranchStatus(); }
   });
 
   branch.onchange=()=>{

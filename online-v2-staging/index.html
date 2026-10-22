@@ -32,8 +32,18 @@
     </div>
   </header>
 
+  <!-- Branch-gated CLOSED screen. Branch selector in header remains accessible. -->
+  <section id="closedGate" class="closed-gate" role="status" aria-live="polite" aria-label="Online ordering availability">
+    <div class="closed-gate-panel">
+      <div class="closed-gate-emblem" aria-hidden="true">2K</div>
+      <div class="closed-gate-eyebrow">2K TAMBAYAN</div>
+      <h1 id="closedGateTitle">CHECKING ONLINE ORDERING</h1>
+      <p id="closedGateMessage">Checking branch availability…</p>
+      <p class="closed-gate-branch">Selected branch: <strong id="closedGateBranch">CAM — Camambugan</strong></p>
+    </div>
+  </section>
+
   <div class="app-shell">
-    <div id="onlineStatusBanner" class="ordering-availability" data-open="false" role="status" aria-live="polite">Checking online ordering availability…</div>
     <div class="intro">
       <h1>Order your favorites <span>♡</span></h1>
       <p>Choose your food and drinks, review your order, then submit to the selected branch.</p>
@@ -110,6 +120,6 @@
       <strong id="mobileTotal">₱0.00</strong><span class="mobile-chevron" aria-hidden="true">↑</span>
     </button>
   </div>
-  <script type="application/json" id="appMeta">{"version":"2K-V2-WEB-123.39","financialWrites":"not touched","v1":"not touched"}</script>
+  <script type="application/json" id="appMeta">{"version":"2K-V2-WEB-123.40","financialWrites":"not touched","v1":"not touched"}</script>
 </body>
 </html>

@@ -21,15 +21,21 @@
 @keyframes orderUpdateFlash { 0% {box-shadow:0 0 0 3px rgba(255,22,132,.42); }100%{box-shadow:0 0 0 0 rgba(255,22,132,0)} }
 @media (prefers-reduced-motion:reduce) { .brand-animated-emblem,.brand-logo:not([hidden]),.tracking-spinner,.order-status-changed {animation:none!important} }
 
-/* STEP 123.39 — branch OPEN/CLOSED status on the main ordering page. */
-.ordering-availability {
-  margin: 0 0 16px; padding: 18px 22px; border: 2px solid #ce3838;
-  border-radius: 16px; background: #fff0f0; color: #a51e1e;
-  font-weight: 900; font-size: clamp(16px,2vw,21px); text-align:center; line-height:1.4;
-}
-.ordering-availability[data-open="true"] {
-  border-color:#168343; background:#eefaf1; color:#126834;
-}
-.product-add:disabled, #checkoutButton:disabled, #submitOrder:disabled, .qty-btn:disabled {
-  opacity:.48; cursor:not-allowed; filter:grayscale(.6);
-}
+/* STEP 123.40 — Closed means NO menu browsing, NO cart, NO checkout. */
+.closed-gate[hidden], .app-shell[hidden], .mobile-cart-bar[hidden] { display: none !important; }
+.closed-gate { min-height: calc(100dvh - 96px); padding: 34px 18px;
+  display: grid; place-items: center; background: #f5f5f7; }
+.closed-gate-panel { background: white; width: min(100%, 510px);
+  padding: clamp(28px,6vw,50px) 26px; text-align:center;
+  border: 1px solid #ebe4e9; border-radius: 24px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.08); }
+.closed-gate-emblem { margin:0 auto 22px; width:76px; height:76px;
+  display:grid; place-items:center; border-radius:22px;
+  background:#181519; color:#ff1684; font-size:36px; font-weight:950;
+  border:2px solid #ff1684; animation:twoKGlow 2.8s ease-in-out infinite; }
+.closed-gate-eyebrow { color:#f31577; font-weight:900; letter-spacing:.1em; font-size:12px; }
+.closed-gate h1 { margin:14px 0; color:#181519; font-weight:950; font-size:clamp(22px,5vw,30px); line-height:1.2; }
+.closed-gate p { color:#69646a; font-size:15px; line-height:1.6; }
+.closed-gate-branch { margin:26px 0 0; font-size:13px !important; }
+.closed-gate-branch strong { color:#181519; }
+@media (prefers-reduced-motion:reduce) { .closed-gate-emblem { animation:none; } }
