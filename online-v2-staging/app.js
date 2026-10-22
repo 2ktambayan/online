@@ -160,7 +160,9 @@
     $('mobileQty').textContent = qty + (qty === 1 ? ' item' : ' items'); $('mobileTotal').textContent = amount;
     $('total').textContent=amount; $('checkoutTotal').textContent=amount;
     $('checkoutBranch').textContent=currentBranch;
-    $('checkoutButton').disabled=qty===0 || submitting || submissionUncertain || !acceptingOrders || !statusKnown;
+    // Allow customers to REVIEW the checkout fields even while branch submissions are closed.
+    // Actual submitOrder() still checks the server-side ordering status; server write flags remain authoritative.
+    $('checkoutButton').disabled=qty===0 || submitting || submissionUncertain;
   }
 
   function openCart() {
@@ -226,7 +228,10 @@
 
   function checkout() {
     if (!cart.size || submissionUncertain) return;
-    $('checkoutPanel').hidden=false; error('');
+    $('checkoutPanel').hidden=false;
+    error((!statusKnown || !acceptingOrders)
+      ? 'CHECKOUT PREVIEW ONLY: This branch is not accepting orders. You can review the form, but SUBMIT ORDER will be rejected until the branch and server order writes are enabled.'
+      : '');
     if (isMobile()) openCart();
     $('checkoutPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
   }
