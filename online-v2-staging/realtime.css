@@ -39,3 +39,10 @@
 .closed-gate-branch { margin:26px 0 0; font-size:13px !important; }
 .closed-gate-branch strong { color:#181519; }
 @media (prefers-reduced-motion:reduce) { .closed-gate-emblem { animation:none; } }
+
+/* STEP 123.41 - Show authentic existing repository root /logo.png */
+.closed-gate-logo-wrap{display:flex;align-items:center;justify-content:center;min-height:98px;margin:0 auto 16px}
+.closed-gate-logo{display:block;max-width:min(210px,65vw);max-height:116px;width:auto;height:auto;object-fit:contain;animation:twoKFloat 3s ease-in-out infinite}
+.closed-gate-logo-wrap .closed-gate-emblem{margin:0}
+.closed-gate-logo[hidden],.closed-gate-logo-wrap .closed-gate-emblem[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.closed-gate-logo{animation:none!important}}
