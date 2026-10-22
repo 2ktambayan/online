@@ -1,0 +1,22 @@
+/* 2K V2: visual animations only. No backend or order state changes. */
+.brand-animated-emblem {
+  display: inline-grid; place-items: center; flex: 0 0 auto;
+  width: 42px; height: 42px; border: 2px solid #ff1684;
+  border-radius: 13px; background: #191115; color: #ff1684;
+  font-size: 20px; font-weight: 950; letter-spacing: -1.5px;
+  box-shadow: 0 0 0 0 rgba(255,22,132,.23);
+  animation: twoKGlow 2.8s ease-in-out infinite;
+}
+.brand-wrap { display: flex; align-items: center; gap: 10px; }
+/* The existing authentic logo.png stays primary if the asset exists. */
+.brand-logo:not([hidden]) + .brand-animated-emblem { display: none; }
+.brand-logo:not([hidden]) { animation: twoKFloat 3s ease-in-out infinite; }
+@keyframes twoKGlow { 0%,100% { transform: scale(1);box-shadow:0 0 0 0 rgba(255,22,132,.23); } 50% {transform:scale(1.045);box-shadow:0 0 0 8px rgba(255,22,132,0);} }
+@keyframes twoKFloat { 0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)} }
+.tracking-spinner { display:inline-block; width:14px; height:14px; margin-left:5px; vertical-align:middle; border:2px solid #f5c7df; border-top-color:#ff1684; border-radius:50%; animation: spin2k .85s linear infinite; }
+.tracking-spinner[hidden] {display:none}
+@keyframes spin2k {to{transform:rotate(360deg)}}
+.live-tracking-hint {font-size:12px;color:#737078;margin:4px 0 9px}
+.order-status-changed { animation: orderUpdateFlash 1.15s ease-out 1; }
+@keyframes orderUpdateFlash { 0% {box-shadow:0 0 0 3px rgba(255,22,132,.42); }100%{box-shadow:0 0 0 0 rgba(255,22,132,0)} }
+@media (prefers-reduced-motion:reduce) { .brand-animated-emblem,.brand-logo:not([hidden]),.tracking-spinner,.order-status-changed {animation:none!important} }

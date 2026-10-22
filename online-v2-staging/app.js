@@ -21,6 +21,11 @@
   let submitting = false;
   let orderTracking = null;
   let submissionUncertain = false;
+  // Customer-side near-real-time status checks. No writes, no extra order submissions.
+  const TRACK_INTERVAL_MS = 5000;
+  let statusInFlight = false;
+  let latestTrackingSignature = '';
+  let statusTimer = null;
   const isMobile = () => window.matchMedia('(max-width:760px)').matches;
   const price = n => '₱' + Number(n).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   const safeStore = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {} };
@@ -265,7 +270,10 @@
       $('checkoutPanel').hidden=true;
       $('trackingPanel').hidden=false;
       $('trackingMessage').textContent='Order: '+res.orderNo+'\nBranch: '+currentBranch+'\nStatus: PENDING / UNPAID\nTotal: '+price(res.totalAmount);
+      latestTrackingSignature = '';
       renderCart(); $('trackingPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+      // First automatic check is after the successful submission has returned.
+      startTracking();
     } catch(e) {
       // A definite backend rejection (including disabled writes) never confirms an order.
       // An ambiguous network/server response needs staff verification before a new request.
@@ -278,15 +286,51 @@
     }
   }
 
-  async function refreshStatus() {
-    if (!orderTracking) return;
-    $('refreshStatus').disabled=true; error('');
+  async function refreshStatus(manual = false) {
+    if (!orderTracking || orderTracking.branchCode !== currentBranch || statusInFlight || document.hidden) return;
+    statusInFlight = true;
+    const refreshButton = $('refreshStatus');
+    if (manual) { refreshButton.disabled = true; error(''); }
+    const tracking = { ...orderTracking };
+    const spinner = $('trackingLoading');
+    if (spinner) spinner.hidden = false;
     try {
-      const res=await callV2({action:'v2OnlineStatus',orderNo:orderTracking.orderNo,orderToken:orderTracking.orderToken});
-      $('trackingMessage').textContent='Order: '+res.orderNo+'\nBranch: '+orderTracking.branchCode+'\nPayment: '+res.paymentStatus+'\nOrder: '+res.orderStatus+'\nTotal: '+price(res.totalAmount);
-    } catch(e) { error(e.message || 'Unable to refresh order status.'); }
-    finally { $('refreshStatus').disabled=false; }
+      const res = await callV2({action:'v2OnlineStatus',orderNo:tracking.orderNo,orderToken:tracking.orderToken});
+      if (!orderTracking || tracking.orderNo !== orderTracking.orderNo || currentBranch !== tracking.branchCode) return;
+      const signature = String(res.orderStatus) + ':' + String(res.paymentStatus);
+      const text = 'Order: '+res.orderNo+'\nBranch: '+tracking.branchCode+'\nPayment: '+res.paymentStatus+'\nOrder: '+res.orderStatus+'\nTotal: '+price(res.totalAmount);
+      $('trackingMessage').textContent = text;
+      if (latestTrackingSignature && signature !== latestTrackingSignature) {
+        const panel = $('trackingPanel');
+        panel.classList.remove('order-status-changed');
+        void panel.offsetWidth;
+        panel.classList.add('order-status-changed');
+      }
+      latestTrackingSignature = signature;
+      const terminal = ['COMPLETED','CANCELLED','REJECTED'].includes(String(res.orderStatus).toUpperCase());
+      if (terminal) stopTracking();
+    } catch(e) {
+      // Automatic checks fail quietly; keep last verified order status visible.
+      if (manual) error(e.message || 'Unable to refresh order status.');
+    } finally {
+      statusInFlight = false;
+      if (manual) refreshButton.disabled = false;
+      if (spinner) spinner.hidden = true;
+    }
   }
+
+  function stopTracking() {
+    if (statusTimer !== null) { clearInterval(statusTimer); statusTimer = null; }
+  }
+  function startTracking() {
+    stopTracking();
+    if (!orderTracking || orderTracking.branchCode !== currentBranch) return;
+    statusTimer = setInterval(() => { if (!document.hidden) void refreshStatus(false); }, TRACK_INTERVAL_MS);
+    if (!document.hidden) void refreshStatus(false);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) void refreshStatus(false);
+  });
 
   branch.onchange=()=>{
     const chosen=branch.value;
@@ -294,6 +338,8 @@
     currentBranch=chosen; closeCart();
     const trackingOnThisBranch=orderTracking?.branchCode===currentBranch;
     $('trackingPanel').hidden=!trackingOnThisBranch;
+    latestTrackingSignature = '';
+    if (trackingOnThisBranch) startTracking(); else stopTracking();
     if(trackingOnThisBranch) $('trackingMessage').textContent='Last order: '+orderTracking.orderNo+'\nTap REFRESH ORDER STATUS.';
     safeStore('2k_v2_selected_branch',currentBranch); loadMenu();
   };
@@ -315,7 +361,7 @@
   $('checkoutButton').onclick=checkout;
   $('backToCart').onclick=()=>{ $('checkoutPanel').hidden=true; error(''); };
   $('checkoutForm').onsubmit=submitOrder;
-  $('refreshStatus').onclick=refreshStatus;
+  $('refreshStatus').onclick=()=>void refreshStatus(true);
   const lastBranch=safeRead('2k_v2_selected_branch');
   if(lastBranch==='CAB' || lastBranch==='CAM') currentBranch=lastBranch;
   branch.value=currentBranch;
@@ -324,7 +370,8 @@
     orderTracking=lastOrder;
     if (lastOrder.branchCode===currentBranch) {
       $('trackingPanel').hidden=false;
-      $('trackingMessage').textContent='Last order: '+lastOrder.orderNo+'\nTap REFRESH ORDER STATUS.';
+      $('trackingMessage').textContent='Last order: '+lastOrder.orderNo+'\nChecking for updates automatically…';
+      startTracking();
     }
   }
   renderCart(); loadMenu();

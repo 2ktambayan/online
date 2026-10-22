@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://script.googleusercontent.com">
   <link rel="preconnect" href="https://drive.google.com">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="realtime.css">
   <script defer src="config.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -18,6 +19,7 @@
     <div class="topbar-inner">
       <div class="brand-wrap">
         <img class="brand-logo" src="logo.png" alt="" onerror="this.hidden=true">
+        <span class="brand-animated-emblem" aria-hidden="true">2K</span>
         <div class="brand-copy">
           <div class="brand">2K TAMBAYAN</div>
           <div class="branch-subtitle">ONLINE ORDERING <span class="staging-chip">V2 STAGING</span></div>
@@ -90,7 +92,8 @@
         </div>
 
         <div id="trackingPanel" class="order-card tracking-panel" hidden>
-          <div class="eyebrow">ORDER UPDATES</div><h2>Track your order</h2>
+          <div class="eyebrow">ORDER UPDATES</div><h2>Track your order <span id="trackingLoading" class="tracking-spinner" aria-label="Checking updates" hidden></span></h2>
+          <p class="live-tracking-hint">Updates automatically while this page is open.</p>
           <p id="trackingMessage" class="tracking-message"></p>
           <button id="refreshStatus" type="button" class="btn btn-outline">REFRESH ORDER STATUS</button>
         </div>
@@ -106,6 +109,6 @@
       <strong id="mobileTotal">₱0.00</strong><span class="mobile-chevron" aria-hidden="true">↑</span>
     </button>
   </div>
-  <script type="application/json" id="appMeta">{"version":"2K-V2-WEB-123.6","financialWrites":"not touched","v1":"not touched"}</script>
+  <script type="application/json" id="appMeta">{"version":"2K-V2-WEB-123.37","financialWrites":"not touched","v1":"not touched"}</script>
 </body>
 </html>
