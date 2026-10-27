@@ -259,7 +259,7 @@
 
     <div class="sectionTitle">
       <h2>Orders Monitor</h2>
-      <span id="ordersSummary">Auto refresh: 3 sec</span>
+      <span id="ordersSummary">Check every 3 sec</span>
     </div>
 
     <div class="orderFilters">
@@ -300,6 +300,12 @@ let authExpiresAt = localStorage.getItem(AUTH_EXPIRES_KEY) || '';
 let authUser = localStorage.getItem(AUTH_USER_KEY) || '';
 
 const REFRESH_MS = 3000;
+// V1.155.2: Never queue another snapshot while one is still running.
+// A slow Apps Script redirect previously caused many overlapping requests.
+const SNAPSHOT_TIMEOUT_MS = 75000;
+const SLOW_REQUEST_MS = 10000;
+let snapshotInFlight = false;
+let snapshotAbortController = null;
 
 let alertsEnabled = localStorage.getItem('2kMonitorAlerts') === '1';
 let knownOrders = new Set(JSON.parse(localStorage.getItem('2kKnownOrders') || '[]'));
@@ -308,7 +314,7 @@ let audioCtx = null;
 let latestOrders = [];
 let orderFilter = 'ACTIVE';
 
-async function apiPost(payload) {
+async function apiPost(payload, options = {}) {
   const response = await fetch(
     API_URL,
     {
@@ -317,7 +323,8 @@ async function apiPost(payload) {
         'Content-Type':'text/plain;charset=utf-8'
       },
       body:JSON.stringify(payload),
-      redirect:'follow'
+      redirect:'follow',
+      ...(options.signal ? {signal: options.signal} : {})
     }
   );
 
@@ -521,7 +528,7 @@ function renderOrders(orders) {
   const host = document.getElementById('orders');
 
   document.getElementById('ordersSummary').textContent =
-    `${visibleOrders.length} shown • Auto refresh: 3 sec`;
+    `${visibleOrders.length} shown • Check every 3 sec`;
 
   if (!visibleOrders.length) {
     const emptyText =
@@ -608,7 +615,30 @@ function persistKnown() {
 }
 
 async function refresh() {
+  if (snapshotInFlight) return;
+  if (!hasValidSavedSession()) {
+    clearAuth();
+    showLogin('Please sign in.');
+    return;
+  }
+
+  snapshotInFlight = true;
   const error = document.getElementById('errorBox');
+  const tokenAtStart = authToken;
+  const controller = new AbortController();
+  snapshotAbortController = controller;
+  let timedOut = false;
+  const slowTimer = setTimeout(() => {
+    if (snapshotInFlight && authToken === tokenAtStart) {
+      document.getElementById('liveText').textContent = 'SYNCING • SLOW';
+      document.getElementById('lastUpdated').textContent =
+        'Server responding slowly; waiting for update...';
+    }
+  }, SLOW_REQUEST_MS);
+  const timeoutTimer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, SNAPSHOT_TIMEOUT_MS);
 
   try {
     if (!hasValidSavedSession()) {
@@ -619,8 +649,11 @@ async function refresh() {
 
     const data = await apiPost({
       action:'getMonitorSnapshot',
-      token:authToken
-    });
+      token:tokenAtStart
+    }, {signal:controller.signal});
+
+    // Ignore a response from a session that was logged out meanwhile.
+    if (authToken !== tokenAtStart || !hasValidSavedSession()) return;
 
     if (!data.success) {
       if (
@@ -664,9 +697,17 @@ async function refresh() {
     document.getElementById('lastUpdated').textContent =
       'Updated ' + new Date().toLocaleTimeString('en-PH', {hour:'numeric',minute:'2-digit',second:'2-digit'});
   } catch (err) {
+    if (authToken !== tokenAtStart) return;
     document.getElementById('liveText').textContent = 'OFFLINE';
-    error.textContent = 'Monitor connection failed: ' + (err.message || err);
+    error.textContent = timedOut
+      ? 'Monitor server did not respond within 75 seconds. Retrying automatically.'
+      : 'Monitor connection failed: ' + (err.message || err);
     error.classList.add('show');
+  } finally {
+    clearTimeout(slowTimer);
+    clearTimeout(timeoutTimer);
+    if (snapshotAbortController === controller) snapshotAbortController = null;
+    snapshotInFlight = false;
   }
 }
 
@@ -728,6 +769,8 @@ document.getElementById('loginForm').addEventListener('submit', async event => {
 document.getElementById('logoutButton').addEventListener('click', async () => {
   const oldToken = authToken;
   clearAuth();
+  // Stop an in-progress snapshot from updating the logged-out dashboard.
+  if (snapshotAbortController) snapshotAbortController.abort();
 
   try {
     if (oldToken) {
